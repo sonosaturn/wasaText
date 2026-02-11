@@ -24,7 +24,8 @@ func (rt *_router) setGroupName(w http.ResponseWriter, r *http.Request, ps httpr
 		return
 	}
 
-	if err := rt.db.SetGroupName(conversationID, body.Name); err != nil {
+	// FIX: Chiamata corretta
+	if err := rt.db.SetConversationName(conversationID, body.Name); err != nil {
 		ctx.Logger.WithError(err).Error("updating group name")
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
@@ -37,8 +38,7 @@ func (rt *_router) setGroupName(w http.ResponseWriter, r *http.Request, ps httpr
 func (rt *_router) setGroupPhoto(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 	conversationID := ps.ByName("conversationId")
 
-	// Parse Multipart Form (File)
-	err := r.ParseMultipartForm(10 << 20) // 10MB max
+	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
 		http.Error(w, "error parsing form", http.StatusBadRequest)
 		return
@@ -51,13 +51,11 @@ func (rt *_router) setGroupPhoto(w http.ResponseWriter, r *http.Request, ps http
 	}
 	defer file.Close()
 
-	// Genera nome file unico
 	imgUUID, _ := uuid.NewV4()
 	filename := "group_" + imgUUID.String() + filepath.Ext(handler.Filename)
 	saveDir := filepath.Join(".", "images")
 	savePath := filepath.Join(saveDir, filename)
 
-	// Salva su disco
 	_ = os.MkdirAll(saveDir, 0755)
 	dst, err := os.Create(savePath)
 	if err != nil {
@@ -70,15 +68,14 @@ func (rt *_router) setGroupPhoto(w http.ResponseWriter, r *http.Request, ps http
 		return
 	}
 
-	// Aggiorna DB
 	photoURL := "/images/" + filename
-	if err := rt.db.SetGroupPhoto(conversationID, photoURL); err != nil {
+	// FIX: Chiamata corretta
+	if err := rt.db.SetConversationPhoto(conversationID, photoURL); err != nil {
 		ctx.Logger.WithError(err).Error("updating group photo db")
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
 
-	// Rispondi col nuovo URL
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]string{"photo_url": photoURL})
 }

@@ -5,7 +5,7 @@ info:
   description: API for the WASAText instant messaging application.
 
 servers:
-  - url: http://localhost:3000
+  - url: http://localhost:3000/v1
 
 tags:
   - name: health
@@ -177,7 +177,7 @@ paths:
               example:
                 messages:
                   - id: "msg1"
-                    conversationId: "conv123" # FIX: Aggiunto campo obbligatorio
+                    conversationId: "conv123"
                     content: "Hello"
                     senderId: "user1"
                     timestamp: "2023-10-27T10:00:00Z"
@@ -224,7 +224,7 @@ paths:
                 $ref: "#/components/schemas/Message"
               example:
                 id: "msg123"
-                conversationId: "conv123" # FIX: Aggiunto campo obbligatorio
+                conversationId: "conv123"
                 senderId: "user1"
                 content: "Hello world"
                 timestamp: "2023-10-27T10:00:00Z"
@@ -259,8 +259,14 @@ paths:
       security:
         - BearerAuth: []
       responses:
-        "204":
+        "200":
           description: Status updated successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Confirmation message
+                example: "OK"
         "500":
           description: Internal Error
           content:
@@ -300,16 +306,6 @@ paths:
       operationId: getConversationMembers
       security:
         - BearerAuth: []
-      parameters:
-        - name: conversationId
-          in: path
-          required: true
-          description: ID of the conversation
-          schema:
-            type: string
-            pattern: "^[a-zA-Z0-9-]+$"
-            minLength: 1
-            maxLength: 64
       responses:
         "200":
           description: List of members retrieved successfully
@@ -317,9 +313,12 @@ paths:
             application/json:
               schema:
                 type: object
+                description: Group members response
                 properties:
                   members:
                     type: array
+                    minItems: 0
+                    maxItems: 1000
                     items:
                       $ref: "#/components/schemas/User"
                     description: List of group members
@@ -336,6 +335,7 @@ paths:
             text/plain:
               schema:
                 type: string
+                description: Error detail
     put:
       tags: [conversations]
       summary: Add user to group
@@ -344,8 +344,14 @@ paths:
       security:
         - BearerAuth: []
       responses:
-        "204":
+        "200":
           description: User added successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Confirmation message
+                example: "OK"
         "403":
           description: Not allowed
           content:
@@ -457,6 +463,7 @@ paths:
           multipart/form-data:
             schema:
               type: object
+              description: Multipart upload schema
               properties:
                 file:
                   type: string
@@ -465,8 +472,14 @@ paths:
                   maxLength: 10485760
                   description: The image file
       responses:
-        "204":
+        "200":
           description: Photo updated
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Confirmation message
+                example: "OK"
         "400":
           description: Invalid format
           content:

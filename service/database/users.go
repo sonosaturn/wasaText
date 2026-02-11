@@ -35,10 +35,9 @@ func (db *appdbimpl) DoLogin(username string) (string, error) {
 	return id, nil
 }
 
-// GetUserByID returns the user identified by id.
-func (db *appdbimpl) GetUserById(id string) (User, error) {
+// GetUser returns the user identified by id. (RINOMINATA PER MATCHARE INTERFACCIA)
+func (db *appdbimpl) GetUser(id string) (User, error) {
     var u User
-    // COALESCE gestisce i casi senza foto
     err := db.c.QueryRow(`
         SELECT id, username, COALESCE(photo_url, '') 
         FROM users 
@@ -50,7 +49,7 @@ func (db *appdbimpl) GetUserById(id string) (User, error) {
     return u, nil
 }
 
-// SearchUsers searches for users by username (case-insensitive substring match).
+// SearchUsers searches for users by username
 func (db *appdbimpl) SearchUsers(query string) ([]User, error) {
     searchQuery := "%" + query + "%"
     rows, err := db.c.Query(`
@@ -78,8 +77,25 @@ func (db *appdbimpl) SearchUsers(query string) ([]User, error) {
 // SetUserPhoto updates the photo URL for the user.
 func (db *appdbimpl) SetUserPhoto(id string, photoURL string) error {
 	_, err := db.c.Exec(`UPDATE users SET photo_url = ? WHERE id = ?`, photoURL, id)
-	if err != nil {
-		return err
+	return err
+}
+
+// SetUsername aggiorna il nome utente se non è già in uso
+func (db *appdbimpl) SetUsername(id string, newName string) (bool, error) {
+	var otherId string
+	err := db.c.QueryRow("SELECT id FROM users WHERE username = ?", newName).Scan(&otherId)
+	if err == nil {
+		if otherId != id {
+			return false, nil 
+		}
+		return true, nil
+	} else if !errors.Is(err, sql.ErrNoRows) {
+		return false, err
 	}
-	return nil
+
+	_, err = db.c.Exec("UPDATE users SET username = ? WHERE id = ?", newName, id)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }

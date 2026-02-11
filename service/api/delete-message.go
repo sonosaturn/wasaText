@@ -9,13 +9,14 @@ import (
 
 // deleteMessage gestisce DELETE /conversations/:conversationId/messages/:messageId
 func (rt *_router) deleteMessage(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
-	// conversationID := ps.ByName("conversationId") // Non strettamente necessario per la delete se l'ID messaggio è univoco, ma fa parte del path
+	// Recuperiamo entrambi i parametri dal percorso
+	conversationID := ps.ByName("conversationId")
 	messageID := ps.ByName("messageId")
 	
-	err := rt.db.DeleteMessage(messageID, ctx.UserID)
+	// Ora passiamo tutti e 3 i parametri richiesti dal DB
+	err := rt.db.DeleteMessage(conversationID, messageID, ctx.UserID)
 	if err != nil {
 		ctx.Logger.WithError(err).Error("Can't delete message")
-		// Se l'errore è "forbidden", potremmo ritornare 403, ma per semplicità gestiamo genericamente
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

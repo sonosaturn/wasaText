@@ -60,6 +60,9 @@
         .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; max-height: 250px; overflow-y: auto; }
         .gallery-item { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; cursor: pointer; border: 1px solid #eee; }
         .empty-gallery { text-align: center; padding: 20px; color: #8696a0; font-size: 0.9rem; background: #f9f9f9; border-radius: 8px; }
+        
+        /* NUOVO: Badge per messaggi non letti */
+        .unread-badge { background-color: #00a884; color: white; border-radius: 50%; min-width: 20px; height: 20px; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; font-weight: bold; padding: 0 5px; }
     </style>
 </head>
 <body>
@@ -81,7 +84,14 @@
                     <img :src="getFullUrl(myPhoto)" class="avatar avatar-lg" @error="handleImgError">
                     <input type="file" ref="fileInput" class="d-none" accept="image/*" @change="uploadPhoto">
                 </div>
-                <div class="flex-grow-1 ms-3 fw-bold">{{ username }}</div>
+                
+                <div class="flex-grow-1 ms-3 d-flex align-items-center">
+                    <span v-if="!isEditingName" class="fw-bold me-2">{{ username }}</span>
+                    <input v-else type="text" class="form-control form-control-sm me-2" v-model="tempUsername" @keyup.enter="saveUsername" @keyup.esc="isEditingName = false" style="max-width: 150px;">
+                    
+                    <i v-if="!isEditingName" class="bi bi-pencil-fill text-muted" style="cursor: pointer; font-size: 0.8rem;" @click="startEditName"></i>
+                    <i v-else class="bi bi-check-circle-fill text-success" style="cursor: pointer;" @click="saveUsername"></i>
+                </div>
                 <button class="btn btn-sm btn-link text-muted" @click="doLogout"><i class="bi bi-box-arrow-right" style="font-size: 1.2rem;"></i></button>
             </div>
             <div class="search-box">
@@ -95,11 +105,21 @@
                 <div v-for="chat in conversations" :key="chat.id" class="chat-item" :class="{ active: selectedChat && selectedChat.id === chat.id }" @click="selectChat(chat)">
                     <img :src="getFullUrl(getChatAvatar(chat))" class="avatar" @error="handleImgError">
                     <div class="flex-grow-1 overflow-hidden">
-                        <div class="d-flex justify-content-between">
+                        <div class="d-flex justify-content-between align-items-center">
                             <span class="fw-bold text-truncate">{{ getChatName(chat) }}</span>
-                            <span class="small text-muted" v-if="chat.last_message_at">{{ formatTime(chat.last_message_at) }}</span>
+                            <span class="small text-muted" v-if="chat.last_message_at" :style="{ color: chat.unread_count > 0 ? '#00a884' : '' }">
+                                {{ formatTime(chat.last_message_at) }}
+                            </span>
                         </div>
-                        <small class="text-muted text-truncate d-block">{{ chat.is_group ? 'Gruppo' : 'Clicca per aprire' }}</small>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted text-truncate d-block">
+                                <span v-if="chat.last_message_sender_id === myId" class="text-muted">Tu: </span>
+                                {{ chat.last_message_preview || (chat.is_group ? 'Gruppo creato' : 'Nuova chat') }}
+                            </small>
+                            <div v-if="chat.unread_count > 0 && (!selectedChat || selectedChat.id !== chat.id)" class="unread-badge">
+                                {{ chat.unread_count }}
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -125,6 +145,7 @@
                                     <span v-for="emoji in ['👍','❤️','😂','😮','😢','🙏']" :key="emoji" class="reaction-option" @click="reactToMessage(msg.id, emoji)">{{emoji}}</span>
                                 </div>
                                 <div class="menu-item" @click="startReply(msg)">Rispondi</div>
+                                <div class="menu-item" @click="openForwardModal(msg)">Inoltra ⏩</div>
                                 <div v-if="msg.senderId === myId" class="menu-item danger" @click="deleteMessage(msg.id)">Elimina</div>
                             </div>
                             <div v-if="msg.reply_to_id" class="quoted-msg-block" @click="scrollToMessage(msg.reply_to_id)">
@@ -134,7 +155,15 @@
                             <div v-if="selectedChat.is_group && msg.senderId !== myId" class="small fw-bold mb-1" style="color: #d85c2c; font-size: 0.75rem;">{{ getUserName(msg.senderId) }}</div>
                             <div v-if="msg.photo_url"><a :href="getFullUrl(msg.photo_url)" target="_blank"><img :src="getFullUrl(msg.photo_url)" class="msg-image" @error="handleImgError"></a></div>
                             {{ msg.content }}
-                            <span class="msg-time">{{ formatTime(msg.timestamp) }} <span v-if="msg.senderId === myId" class="msg-status"><i v-if="msg.status === 2" class="bi bi-check2-all status-read"></i><i v-else class="bi bi-check2 status-sent"></i></span></span>
+                            <span class="msg-time">{{ formatTime(msg.timestamp) }} 
+                                <span v-if="msg.senderId === myId" class="msg-status">
+                                    <i v-if="msg.status === 2" class="bi bi-check2-all status-read" title="Letto"></i>
+                                    
+                                    <i v-else-if="msg.status === 1" class="bi bi-check2-all" title="Ricevuto" style="color: grey"></i>
+                                    
+                                    <i v-else class="bi bi-check2 status-sent" title="Inviato"></i>
+                                </span>
+                            </span>
                             <div v-if="msg.reactions && msg.reactions.length > 0" class="msg-reactions-display">
                                 <span v-for="(count, emoji) in groupReactions(msg.reactions)" :key="emoji">{{ emoji }} <span v-if="count > 1" style="font-weight: bold; font-size: 0.8rem; color: #666;">{{ count }}</span></span>
                             </div>
@@ -161,6 +190,28 @@
     <div class="modal fade" id="createGroupModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nuovo Gruppo</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="text" class="form-control mb-3" v-model="newGroupName" placeholder="Nome"><div class="input-group mb-2"><input type="text" class="form-control" placeholder="Cerca..." v-model="groupMemberQuery" @keyup.enter="searchUserForGroup"><button class="btn btn-outline-secondary" @click="searchUserForGroup">Cerca</button></div><div v-if="groupSearchResults.length > 0" class="list-group mb-3"><button v-for="u in groupSearchResults" :key="u.id" class="list-group-item list-group-item-action d-flex justify-content-between" @click="addMemberToSelection(u)">{{ u.username }} <i class="bi bi-plus-circle text-primary"></i></button></div><div class="p-2 border rounded bg-light" v-if="newGroupMembers.length > 0"><span v-for="m in newGroupMembers" :key="m.id" class="member-chip">{{ m.username }} <i class="bi bi-x-circle-fill" @click="removeMemberFromSelection(m.id)"></i></span></div></div><div class="modal-footer"><button class="btn btn-primary" @click="createGroup" data-bs-dismiss="modal">Crea</button></div></div></div></div>
     
     <div class="modal fade" id="infoModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Info</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" v-if="selectedChat"><div class="text-center mb-4"><div class="position-relative d-inline-block" :style="{ cursor: selectedChat.is_group ? 'pointer' : 'default' }" @click="selectedChat.is_group ? $refs.groupPhotoInput.click() : null"><img :src="getFullUrl(getChatAvatar(selectedChat))" class="avatar" style="width: 80px; height: 80px;" @error="handleImgError"><span v-if="selectedChat.is_group" class="position-absolute bottom-0 end-0 bg-white border rounded-circle p-1"><i class="bi bi-camera-fill"></i></span><input v-if="selectedChat.is_group" type="file" ref="groupPhotoInput" class="d-none" accept="image/*" @change="uploadGroupPhoto"></div><div class="mt-3 d-flex justify-content-center align-items-center gap-2"><input type="text" class="form-control form-control-sm text-center fw-bold" v-model="editingGroupName" @blur="updateGroupName" @keyup.enter="updateGroupName" :disabled="!selectedChat.is_group" style="max-width: 200px; border: none; background: transparent; font-size: 1.2rem;"><i v-if="selectedChat.is_group" class="bi bi-pencil-fill text-muted small"></i></div></div><div v-if="selectedChat.is_group"><h6 class="text-muted mb-2">Partecipanti</h6><div class="list-group mb-3" style="max-height: 200px; overflow-y: auto;"><div v-for="m in currentGroupMembers" :key="m.id" class="list-group-item d-flex align-items-center"><img :src="getFullUrl(m.photo_url)" class="avatar avatar-sm me-2" @error="handleImgError"><span>{{ m.username }}</span></div></div><div class="input-group mb-2"><input type="text" class="form-control form-control-sm" placeholder="Aggiungi..." v-model="addMemberQuery" @keyup.enter="searchMemberToAdd"><button class="btn btn-outline-secondary btn-sm" @click="searchMemberToAdd">Cerca</button></div><div v-if="addMemberResults.length > 0" class="list-group mb-3"><button v-for="u in addMemberResults" :key="u.id" class="list-group-item list-group-item-action" @click="addMemberToGroup(u)">{{ u.username }} <i class="bi bi-person-plus-fill text-success"></i></button></div></div><div v-else><h6 class="text-muted mb-2">Galleria</h6><div v-if="mediaMessages.length > 0" class="gallery-grid"><img v-for="msg in mediaMessages" :key="msg.id" :src="getFullUrl(msg.photo_url)" class="gallery-item" onclick="window.open(this.src)"></div><div v-else class="empty-gallery">Nessun media</div></div></div><div class="modal-footer"><button class="btn btn-danger w-100" @click="leaveConversation" data-bs-dismiss="modal">{{ selectedChat && selectedChat.is_group ? 'Abbandona Gruppo' : 'Elimina Chat' }}</button></div></div></div></div>
+
+    <div class="modal fade" id="forwardModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Inoltra a...</h5>
+                    <button class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" class="form-control mb-3" placeholder="Cerca chat..." v-model="forwardSearch">
+                    <div class="list-group">
+                        <button v-for="chat in filteredForwardList" :key="chat.id" 
+                                class="list-group-item list-group-item-action d-flex align-items-center"
+                                @click="forwardToChat(chat)">
+                            <img :src="getFullUrl(getChatAvatar(chat))" class="avatar avatar-sm me-2" @error="handleImgError">
+                            <span>{{ getChatName(chat) }}</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -177,10 +228,21 @@
                 myPhoto: localStorage.getItem('myPhoto') || '/default.png', errorMsg: '', loading: false, conversations: [], selectedChat: null,
                 messages: [], newMessage: '', searchQuery: '', selectedFile: null, previewUrl: null, newGroupName: '', groupMemberQuery: '',
                 groupSearchResults: [], newGroupMembers: [], currentGroupMembers: [], addMemberQuery: '', addMemberResults: [], editingGroupName: '',
-                usersCache: {}, pollInterval: null, activeMenuMsgId: null, replyingToMsg: null
+                usersCache: {}, pollInterval: null, activeMenuMsgId: null, replyingToMsg: null,
+                isEditingName: false, tempUsername: '',
+                forwardSearch: '', msgToForward: null
             }
         },
-        computed: { mediaMessages() { return this.messages ? this.messages.filter(m => m.photo_url && m.photo_url !== '') : []; } },
+        computed: { 
+            mediaMessages() { return this.messages ? this.messages.filter(m => m.photo_url && m.photo_url !== '') : []; },
+            filteredForwardList() {
+                if (!this.conversations) return [];
+                return this.conversations.filter(c => {
+                    let name = this.getChatName(c).toLowerCase();
+                    return name.includes(this.forwardSearch.toLowerCase());
+                });
+            }
+        },
         async mounted() { if (this.token) { this.setupAxios(); await this.refreshMyProfile(); await this.loadConversations(); this.startPolling(); } },
         beforeUnmount() { this.stopPolling(); },
         methods: {
@@ -188,6 +250,37 @@
             getFullUrl(path) { return (!path || path === '/default.png' || path === 'null') ? '/default.png' : `${BACKEND_URL}${path}`; },
             handleImgError(e) { if(e.target.src.includes("default.png")) return; e.target.src = "/default.png"; },
             
+            startEditName() { this.tempUsername = this.username; this.isEditingName = true; },
+            async saveUsername() {
+                if (!this.tempUsername || this.tempUsername.length < 3) { alert("Nome troppo corto!"); return; }
+                if (this.tempUsername === this.username) { this.isEditingName = false; return; }
+                try {
+                    await axios.put(`/users/${this.myId}/username`, { username: this.tempUsername });
+                    this.username = this.tempUsername;
+                    localStorage.setItem('username', this.username);
+                    this.isEditingName = false;
+                } catch (e) {
+                    if (e.response && e.response.status === 409) { alert("Nome utente già in uso."); } 
+                    else { alert("Errore cambio nome: " + e.message); }
+                }
+            },
+
+            openForwardModal(msg) {
+                this.msgToForward = msg;
+                this.forwardSearch = '';
+                this.activeMenuMsgId = null;
+                new bootstrap.Modal(document.getElementById('forwardModal')).show();
+            },
+            async forwardToChat(targetChat) {
+                if (!this.msgToForward) return;
+                bootstrap.Modal.getInstance(document.getElementById('forwardModal')).hide();
+                try {
+                    await axios.post(`/conversations/${targetChat.id}/messages/forward`, { message_id: this.msgToForward.id });
+                    alert("Messaggio inoltrato!");
+                    if (this.selectedChat && this.selectedChat.id === targetChat.id) { await this.loadMessages(); }
+                } catch (e) { alert("Errore inoltro: " + (e.response?.data || e.message)); }
+            },
+
             async loadConversations() {
                 try {
                     let res = await axios.get("/conversations");
@@ -195,7 +288,13 @@
                     for(let c of this.conversations) if(!c.is_group && c.other_user_id) await this.fetchUserInfo(c.other_user_id);
                 } catch(e) {}
             },
-            async selectChat(chat) { this.selectedChat = chat; this.messages = []; this.replyingToMsg = null; await this.loadMessages(); },
+            async selectChat(chat) { 
+                this.selectedChat = chat; 
+                chat.unread_count = 0; // AZZERA LOCALMENTE PER FEEDBACK IMMEDIATO
+                this.messages = []; 
+                this.replyingToMsg = null; 
+                await this.loadMessages(); 
+            },
             async loadMessages() {
                 if(!this.selectedChat) return;
                 try {
@@ -213,7 +312,10 @@
                     await axios.put(`/conversations/${this.selectedChat.id}/read`);
                     let res = await axios.get(`/conversations/${this.selectedChat.id}/messages`);
                     let newMsgs = res.data.messages || [];
-                    if(JSON.stringify(newMsgs) !== JSON.stringify(this.messages)) this.messages = newMsgs;
+                    if(JSON.stringify(newMsgs) !== JSON.stringify(this.messages)) {
+                        this.messages = newMsgs;
+                        await this.loadConversations();
+                    }
                 } catch(e) {}
             },
             async searchAndCreate() {
@@ -249,25 +351,25 @@
             async refreshMyProfile() {
                 try {
                     let res = await axios.get(`/users?q=${this.username}`);
-                    let users = res.data.users || [];
-                    let me = users.find(u => u.username === this.username);
-                    if(me) { this.myId = me.id; this.myPhoto = me.photo_url || '/default.png'; this.usersCache[this.myId] = me; localStorage.setItem('myId', me.id); }
+                    let me = res.data.users?.find(u => u.username === this.username);
+                    if(me) { 
+                        this.myId = me.id; this.myPhoto = me.photo_url || '/default.png'; 
+                        this.usersCache[this.myId] = me; localStorage.setItem('myId', me.id); 
+                    }
                 } catch(e) {}
             },
             async openInfoModal() {
                 if (!this.selectedChat) return; this.editingGroupName = this.selectedChat.is_group ? this.selectedChat.title : this.getChatName(this.selectedChat);
-                if (this.selectedChat.is_group) { try { let res = await axios.get(`/conversations/${this.selectedChat.id}/members`); 
-                this.currentGroupMembers = res.data.members || []; } catch (e) {} }
+                if (this.selectedChat.is_group) { try { let res = await axios.get(`/conversations/${this.selectedChat.id}/members`); this.currentGroupMembers = res.data.members || []; } catch (e) {} }
                 new bootstrap.Modal(document.getElementById('infoModal')).show();
             },
             async addMemberToGroup(user) { try { await axios.put(`/conversations/${this.selectedChat.id}/members/${user.id}`); let res = await axios.get(`/conversations/${this.selectedChat.id}/members`); this.currentGroupMembers = res.data.members || []; } catch (e) {} },
-
             toggleMenu(msgId) { this.activeMenuMsgId = (this.activeMenuMsgId === msgId) ? null : msgId; },
             closeAllMenus() { this.activeMenuMsgId = null; },
             async reactToMessage(msgId, emoji) {
                 try {
                     let msg = this.messages.find(m => m.id === msgId); if (!msg) return;
-                    let myExisting = msg.reactions ? msg.reactions.find(r => r.user_id === this.myId && r.emoji === emoji) : null;
+                    let myExisting = msg.reactions?.find(r => r.user_id === this.myId && r.emoji === emoji);
                     await axios.put(`/conversations/${this.selectedChat.id}/messages/${msgId}/reaction`, { emoji: myExisting ? "" : emoji });
                     this.activeMenuMsgId = null; await this.refreshMessages();
                 } catch(e) {}
@@ -299,12 +401,14 @@
                     if(this.selectedFile) formData.append("file", this.selectedFile);
                     if(this.replyingToMsg) formData.append("reply_to", this.replyingToMsg.id);
                     await axios.post(`/conversations/${this.selectedChat.id}/messages`, formData);
-                    this.newMessage = ''; this.selectedFile = null; this.replyingToMsg = null; this.clearFile(); await this.loadMessages();
+                    this.newMessage = ''; this.selectedFile = null; this.replyingToMsg = null; this.clearFile(); 
+                    await this.loadMessages();
+                    await this.loadConversations();
                 } catch(e) { alert("Errore invio: " + e.message); }
             },
             async deleteMessage(msgId) {
                 if(!confirm("Eliminare?")) return;
-                try { await axios.delete(`/conversations/${this.selectedChat.id}/messages/${msgId}`); this.activeMenuMsgId = null; await this.loadMessages(); } catch(e) {}
+                try { await axios.delete(`/conversations/${this.selectedChat.id}/messages/${msgId}`); this.activeMenuMsgId = null; await this.loadMessages(); await this.loadConversations(); } catch(e) {}
             },
             addMemberToSelection(user) { this.newGroupMembers.push(user); this.groupSearchResults = []; this.groupMemberQuery = ''; },
             removeMemberFromSelection(userId) { this.newGroupMembers = this.newGroupMembers.filter(m => m.id !== userId); },

@@ -8,26 +8,18 @@ import (
 )
 
 func (rt *_router) leaveGroup(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
-	// 1. Prendi i parametri dall'URL
 	conversationID := ps.ByName("conversationId")
 	targetUserID := ps.ByName("userId")
 
-	// 2. Chiama il database
-	// Rimossa requesterID per compatibilità con la firma del DB
-	err := rt.db.RemoveMemberFromGroup(conversationID, targetUserID)
+	// FIX: Chiamata corretta all'interfaccia
+	err := rt.db.LeaveConversation(conversationID, targetUserID)
 	
 	if err != nil {
-		errMsg := err.Error()
-		if errMsg == "member not found" {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-		
+		// Nota: se il DB restituisce sql.ErrNoRows o altro, gestiscilo qui se vuoi 404
 		ctx.Logger.Error("Errore uscita gruppo: ", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	// 3. Successo
 	w.WriteHeader(http.StatusNoContent)
 }

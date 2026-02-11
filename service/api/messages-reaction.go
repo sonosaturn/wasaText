@@ -8,8 +8,9 @@ import (
 	"github.com/sonosaturn/wasatext/service/api/reqcontext"
 )
 
-// reactToMessage gestisce PUT /conversations/:id/messages/:msgId/reaction
+// reactToMessage gestisce PUT /conversations/:conversationId/messages/:messageId/reaction
 func (rt *_router) reactToMessage(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
+	conversationID := ps.ByName("conversationId")
 	messageID := ps.ByName("messageId")
 
 	var body struct {
@@ -29,8 +30,8 @@ func (rt *_router) reactToMessage(w http.ResponseWriter, r *http.Request, ps htt
 			return
 		}
 	} else {
-		// Altrimenti aggiungiamo/aggiorniamo
-		err := rt.db.ReactToMessage(messageID, ctx.UserID, body.Emoji)
+		// Altrimenti aggiungiamo/aggiorniamo (Passiamo anche conversationID ora)
+		err := rt.db.ReactToMessage(conversationID, messageID, ctx.UserID, body.Emoji)
 		if err != nil {
 			ctx.Logger.WithError(err).Error("db react error")
 			http.Error(w, "db error", http.StatusInternalServerError)
