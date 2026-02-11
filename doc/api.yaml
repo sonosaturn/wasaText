@@ -1,0 +1,687 @@
+openapi: 3.0.0
+info:
+  title: WASAText API
+  version: 1.0.0
+  description: API for the WASAText instant messaging application.
+
+servers:
+  - url: http://localhost:3000
+
+tags:
+  - name: health
+    description: Check system health
+  - name: session
+    description: Login and authentication
+  - name: conversations
+    description: Manage chats and groups
+  - name: messages
+    description: Send and receive messages
+  - name: users
+    description: Search users and manage profiles
+
+paths:
+  # --- HEALTH CHECK ---
+  /liveness:
+    get:
+      tags: [health]
+      summary: Liveness probe
+      description: Returns the status of the server
+      operationId: liveness
+      responses:
+        "200":
+          description: Server is alive
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Status message
+                example: "OK"
+
+  # --- LOGIN ---
+  /session:
+    post:
+      tags: [session]
+      summary: Logs in the user
+      description: Creates a new session for the user
+      operationId: doLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "201":
+          description: User log-in successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+              example:
+                identifier: "123e4567-e89b-12d3-a456-426614174000"
+        "400":
+          description: Invalid username
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+            text/plain:
+              schema:
+                type: string
+                description: Error detail
+                example: "Username too short"
+
+  # --- CONVERSATIONS ---
+  /conversations:
+    get:
+      tags: [conversations]
+      summary: Get the list of conversations
+      description: Returns all conversations for the logged user
+      operationId: getMyConversations
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: List of conversations retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversationList"
+              example:
+                conversations:
+                  - id: "conv1"
+                    name: "Mario"
+                    isGroup: false
+                    lastMessage: "Ciao!"
+                    lastMessageTimestamp: "2023-10-27T10:00:00Z"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+            text/plain:
+              schema:
+                type: string
+                description: Error detail
+
+    post:
+      tags: [conversations]
+      summary: Create a new conversation
+      description: Creates a 1-to-1 chat or a group
+      operationId: createConversation
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateConversationRequest"
+      responses:
+        "201":
+          description: Conversation created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversationRef"
+              example:
+                conversationId: "conv123"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+            text/plain:
+              schema:
+                type: string
+                description: Error detail
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+            text/plain:
+              schema:
+                type: string
+                description: Error detail
+
+  # --- MESSAGES ---
+  /conversations/{conversationId}/messages:
+    parameters:
+      - name: conversationId
+        in: path
+        required: true
+        description: ID of the conversation
+        schema:
+          type: string
+          pattern: "^[a-zA-Z0-9-]+$"
+          minLength: 1
+          maxLength: 64
+    get:
+      tags: [messages]
+      summary: Get conversation history
+      description: Retrieves messages for a specific conversation
+      operationId: getConversationMessages
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageList"
+              example:
+                messages:
+                  - id: "msg1"
+                    conversationId: "conv123" # FIX: Aggiunto campo obbligatorio
+                    content: "Hello"
+                    senderId: "user1"
+                    timestamp: "2023-10-27T10:00:00Z"
+                    status: 1
+        "403":
+          description: User not in conversation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+            text/plain:
+              schema:
+                type: string
+                description: Error detail
+        "404":
+          description: Conversation not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+            text/plain:
+              schema:
+                type: string
+                description: Error detail
+    post:
+      tags: [messages]
+      summary: Send a message
+      description: Sends a new message to the conversation
+      operationId: sendMessage
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageRequest"
+      responses:
+        "201":
+          description: Message sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+              example:
+                id: "msg123"
+                conversationId: "conv123" # FIX: Aggiunto campo obbligatorio
+                senderId: "user1"
+                content: "Hello world"
+                timestamp: "2023-10-27T10:00:00Z"
+        "500":
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+            text/plain:
+              schema:
+                type: string
+                description: Error detail
+
+  # --- READ RECEIPT ---
+  /conversations/{conversationId}/read:
+    parameters:
+      - name: conversationId
+        in: path
+        required: true
+        description: ID of the conversation
+        schema:
+          type: string
+          pattern: "^[a-zA-Z0-9-]+$"
+          minLength: 1
+          maxLength: 64
+    put:
+      tags: [messages]
+      summary: Mark conversation as read
+      description: Updates the read status for the user in this conversation
+      operationId: markAsRead
+      security:
+        - BearerAuth: []
+      responses:
+        "204":
+          description: Status updated successfully
+        "500":
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+            text/plain:
+              schema:
+                type: string
+                description: Error detail
+
+  # --- GROUP MANAGEMENT ---
+  /conversations/{conversationId}/members/{userId}:
+    parameters:
+      - name: conversationId
+        in: path
+        required: true
+        description: ID of the conversation
+        schema:
+          type: string
+          pattern: "^[a-zA-Z0-9-]+$"
+          minLength: 1
+          maxLength: 64
+      - name: userId
+        in: path
+        required: true
+        description: ID of the user to add/remove
+        schema:
+          type: string
+          pattern: "^[a-zA-Z0-9-]+$"
+          minLength: 1
+          maxLength: 64
+    get:
+      tags: [conversations]
+      summary: Get group members
+      description: Returns the list of users in a group chat
+      operationId: getConversationMembers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          description: ID of the conversation
+          schema:
+            type: string
+            pattern: "^[a-zA-Z0-9-]+$"
+            minLength: 1
+            maxLength: 64
+      responses:
+        "200":
+          description: List of members retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  members:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/User"
+                    description: List of group members
+                example:
+                  members:
+                    - id: "user1"
+                      username: "Mario"
+        "500":
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+            text/plain:
+              schema:
+                type: string
+    put:
+      tags: [conversations]
+      summary: Add user to group
+      description: Adds a participant to a group chat
+      operationId: addToGroup
+      security:
+        - BearerAuth: []
+      responses:
+        "204":
+          description: User added successfully
+        "403":
+          description: Not allowed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+            text/plain:
+              schema:
+                type: string
+                description: Error detail
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+            text/plain:
+              schema:
+                type: string
+                description: Error detail
+
+    delete:
+      tags: [conversations]
+      summary: Remove user from group
+      description: Removes a participant or leaves the group
+      operationId: leaveGroup
+      security:
+        - BearerAuth: []
+      responses:
+        "204":
+          description: User removed/left successfully
+        "500":
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+            text/plain:
+              schema:
+                type: string
+                description: Error detail
+
+  # --- USERS ---
+  /users:
+    get:
+      tags: [users]
+      summary: Search users
+      description: Find users by username
+      operationId: searchUsers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          description: String to search in usernames
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 32
+            pattern: "^[a-zA-Z0-9 ]+$"
+      responses:
+        "200":
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserList"
+              example:
+                users:
+                  - id: "user1"
+                    username: "Mario"
+
+  /users/{userId}/photo:
+    put:
+      tags: [users]
+      summary: Set profile photo
+      description: Updates the user's avatar
+      operationId: setMyPhoto
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: ID of the user
+          schema:
+            type: string
+            pattern: "^[a-zA-Z0-9-]+$"
+            minLength: 1
+            maxLength: 64
+      requestBody:
+        required: true
+        content:
+          image/png:
+            schema:
+              type: string
+              format: binary
+              minLength: 1
+              maxLength: 10485760 # 10MB
+              description: Binary image data
+          image/jpeg:
+            schema:
+              type: string
+              format: binary
+              minLength: 1
+              maxLength: 10485760
+              description: Binary image data
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  minLength: 1
+                  maxLength: 10485760
+                  description: The image file
+      responses:
+        "204":
+          description: Photo updated
+        "400":
+          description: Invalid format
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+            text/plain:
+              schema:
+                type: string
+                description: Error detail
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+            text/plain:
+              schema:
+                type: string
+                description: Error detail
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: UUID
+
+  schemas:
+    ErrorResponse:
+      type: object
+      description: Standard error response
+      properties:
+        message:
+          type: string
+          description: Error description
+          example: "Something went wrong"
+
+    LoginRequest:
+      type: object
+      description: Payload for user login
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 16
+          pattern: "^[a-zA-Z0-9]+$"
+          description: "The username chosen by the user"
+      required: [name]
+
+    SessionResponse:
+      type: object
+      description: Response containing the session token
+      properties:
+        identifier:
+          type: string
+          description: "The authentication token/ID"
+          example: "1234-5678-90ab"
+      required: [identifier]
+
+    ConversationSummary:
+      type: object
+      description: Brief info about a conversation
+      properties:
+        id:
+          type: string
+          description: Unique conversation ID
+          example: "conv1"
+        name:
+          type: string
+          description: Group name or other user's name
+          example: "Mario"
+        isGroup:
+          type: boolean
+          description: True if it's a group chat
+          example: false
+        photo:
+          type: string
+          description: URL or Base64 of the photo (optional)
+          example: "/images/123.jpg"
+        lastMessage:
+          type: string
+          description: Preview of the last message
+          example: "Hello!"
+        lastMessageTimestamp:
+          type: string
+          format: date-time
+          description: When the last message was sent
+          example: "2023-10-27T10:00:00Z"
+      required: [id, isGroup, name]
+
+    ConversationList:
+      type: object
+      description: Wrapper for list of conversations
+      properties:
+        conversations:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConversationSummary"
+          description: Array of conversation summaries
+          minItems: 0
+          maxItems: 1000
+
+    CreateConversationRequest:
+      type: object
+      description: Payload to create a chat
+      properties:
+        otherUserId:
+          type: string
+          description: Provide this to create a 1-to-1 chat
+          pattern: "^[a-zA-Z0-9-]+$"
+          minLength: 1
+          maxLength: 64
+        groupName:
+          type: string
+          description: Provide this to create a Group chat
+          pattern: "^[a-zA-Z0-9 ]+$"
+          minLength: 1
+          maxLength: 64
+
+    ConversationRef:
+      type: object
+      description: Reference to a created conversation
+      properties:
+        conversationId:
+          type: string
+          description: The ID of the new conversation
+          example: "conv123"
+      required: [conversationId]
+
+    Message:
+      type: object
+      description: Represents a single chat message
+      properties:
+        id:
+          type: string
+          description: Message ID
+          example: "msg1"
+        conversationId:
+          type: string
+          description: Conversation ID
+          example: "conv1"
+        senderId:
+          type: string
+          description: ID of the sender
+          example: "user1"
+        content:
+          type: string
+          description: Text content
+          example: "Hello there"
+        photoUrl:
+          type: string
+          description: URL of the attached photo (optional)
+          example: "/images/pic.jpg"
+        timestamp:
+          type: string
+          format: date-time
+          description: Creation time
+          example: "2023-10-27T10:00:00Z"
+        status:
+          type: integer
+          description: 1=Sent, 2=Read
+          example: 1
+      required: [id, conversationId, senderId, content, timestamp]
+
+    MessageList:
+      type: object
+      description: Wrapper for list of messages
+      properties:
+        messages:
+          type: array
+          items:
+            $ref: "#/components/schemas/Message"
+          description: Array of messages
+          minItems: 0
+          maxItems: 1000
+
+    MessageRequest:
+      type: object
+      description: Payload to send a message
+      properties:
+        content:
+          type: string
+          minLength: 1
+          maxLength: 2000
+          pattern: ".*"
+          description: Text content
+      required: [content]
+
+    User:
+      type: object
+      description: Public user profile
+      properties:
+        id:
+          type: string
+          description: User ID
+          example: "user1"
+        username:
+          type: string
+          description: User handle
+          example: "Mario"
+        photoUrl:
+          type: string
+          description: Profile picture URL
+          example: "/images/avatar.jpg"
+      required: [id, username]
+
+    UserList:
+      type: object
+      description: Wrapper for list of users
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/User"
+          description: Array of users
+          minItems: 0
+          maxItems: 1000
