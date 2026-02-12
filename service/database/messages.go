@@ -63,9 +63,11 @@ func (db *appdbimpl) GetConversationMessages(conversationID string, userID strin
 			CASE 
 				WHEN m.sender_id = ? THEN 
 					CASE 
-						WHEN (SELECT COUNT(*) FROM conversation_members cm WHERE cm.conversation_id = m.conversation_id AND cm.last_read_at >= m.timestamp AND cm.user_id != m.sender_id) > 0 
-						THEN 2 -- Letto
-						ELSE 0 -- Inviato
+    					WHEN (SELECT COUNT(*) FROM conversation_members cm WHERE cm.conversation_id = m.conversation_id AND cm.last_read_at >= m.timestamp AND cm.user_id != m.sender_id) 
+         					= -- DEVE ESSERE UGUALE AL TOTALE DEI MEMBRI (MENO ME)
+         					(SELECT COUNT(*) FROM conversation_members cm WHERE cm.conversation_id = m.conversation_id AND cm.user_id != m.sender_id)
+    					THEN 2 -- Letto da TUTTI
+    					ELSE 0 -- Non ancora letto da tutti
 					END
 				ELSE 1 -- Ricevuto (se non sono io il mittente)
 			END as status

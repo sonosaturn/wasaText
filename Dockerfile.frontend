@@ -1,0 +1,8 @@
+# Usa un'immagine leggera di Nginx
+FROM nginx:alpine
+
+# Copia la cartella webui (dove hai index.html) nella cartella pubblica di Nginx
+COPY webui /usr/share/nginx/html
+
+# Espone la porta 80 (standard web)
+EXPOSE 80
