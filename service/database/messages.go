@@ -26,7 +26,7 @@ func (db *appdbimpl) SendMessage(conversationID string, senderID string, content
 	// 3. Inserisci nel DB
 	query := `INSERT INTO messages (id, conversation_id, sender_id, content, photo_url, reply_to_id, timestamp) 
 			  VALUES (?, ?, ?, ?, ?, ?, DATETIME('now'))`
-	
+
 	_, err = db.c.Exec(query, msgID, conversationID, senderID, content, photoURL, replyTo)
 	if err != nil {
 		return nil, err
@@ -102,9 +102,9 @@ func (db *appdbimpl) GetConversationMessages(conversationID string, userID strin
 			str := replyTo.String
 			m.ReplyToID = &str
 		}
-		
+
 		m.ConversationID = conversationID
-		
+
 		// Carica Reazioni
 		reactions, _ := db.getMessageReactions(m.ID)
 		m.Reactions = reactions
@@ -179,7 +179,7 @@ func (db *appdbimpl) GetMessageForForwarding(msgID string, userID string) (strin
 		FROM messages m
 		JOIN conversation_members cm ON m.conversation_id = cm.conversation_id
 		WHERE m.id = ? AND cm.user_id = ?`
-	
+
 	err := db.c.QueryRow(query, msgID, userID).Scan(&content, &photoURL)
 	return content, photoURL, err
 }

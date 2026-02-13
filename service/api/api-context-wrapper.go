@@ -1,10 +1,10 @@
 package api
 
 import (
-	"github.com/sonosaturn/wasatext/service/api/reqcontext"
 	"github.com/gofrs/uuid"
 	"github.com/julienschmidt/httprouter"
 	"github.com/sirupsen/logrus"
+	"github.com/sonosaturn/wasatext/service/api/reqcontext"
 	"net/http"
 )
 

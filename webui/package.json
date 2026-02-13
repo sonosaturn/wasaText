@@ -6,7 +6,8 @@
 		"build-dev": "yarn install --immutable --immutable-cache && vite build --mode development",
 		"build-prod": "yarn install --immutable --immutable-cache && vite build --mode production",
 		"build-embed": "yarn install --immutable --immutable-cache && vite build --mode production --base=/dashboard/",
-		"preview": "vite preview --port 4173"
+		"lint": "eslint . --ignore-pattern 'public/**' --ignore-pattern 'dist/**'",
+  "lint:fix": "eslint . --ignore-pattern 'public/**' --ignore-pattern 'dist/**' --fix"
 	},
 	"dependencies": {
 		"axios": "0.28.0",
@@ -15,6 +16,9 @@
 	},
 	"devDependencies": {
 		"@vitejs/plugin-vue": "^3.0.1",
+		"eslint": "9.2.0",
+		"eslint-plugin-import": "^2.32.0",
+		"eslint-plugin-vue": "9.25.0",
 		"vite": "^3.0.4"
 	},
 	"packageManager": "yarn@4.5.0"

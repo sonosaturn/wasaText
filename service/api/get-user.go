@@ -18,11 +18,11 @@ func (rt *_router) getUserById(w http.ResponseWriter, r *http.Request, ps httpro
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-    
-    if user.ID == "" {
-        w.WriteHeader(http.StatusNotFound)
-        return
-    }
+
+	if user.ID == "" {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(user)

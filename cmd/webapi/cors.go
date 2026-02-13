@@ -13,7 +13,7 @@ func applyCORSHandler(h http.Handler) http.Handler {
 		}),
 		handlers.AllowedMethods([]string{"GET", "POST", "OPTIONS", "DELETE", "PUT"}),
 		// In sviluppo usiamo "*" o "http://localhost:5173"
-		handlers.AllowedOrigins([]string{"*"}), 
+		handlers.AllowedOrigins([]string{"*"}),
 		handlers.MaxAge(86400), // Cache del CORS per 24 ore (evita troppe richieste OPTIONS)
 	)(h)
 }

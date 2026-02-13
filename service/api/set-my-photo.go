@@ -14,7 +14,7 @@ import (
 // PUT /users/:userId/photo
 func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 	idStr := ps.ByName("userId")
-	
+
 	// Parse Multipart Form
 	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
@@ -61,6 +61,6 @@ func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprou
 		http.Error(w, "db error", http.StatusInternalServerError)
 		return
 	}
-    
+
 	w.WriteHeader(http.StatusNoContent)
 }

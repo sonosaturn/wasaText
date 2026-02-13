@@ -33,7 +33,7 @@ func (rt *_router) sendMessage(w http.ResponseWriter, r *http.Request, ps httpro
 	file, handler, err := r.FormFile("file")
 	if err == nil {
 		defer file.Close()
-		
+
 		// FIX: Controllo errore UUID
 		imgUUID, err := uuid.NewV4()
 		if err != nil {
@@ -41,13 +41,13 @@ func (rt *_router) sendMessage(w http.ResponseWriter, r *http.Request, ps httpro
 			http.Error(w, "internal error", http.StatusInternalServerError)
 			return
 		}
-		
+
 		filename := imgUUID.String() + filepath.Ext(handler.Filename)
 		savePath := filepath.Join(".", "images", filename)
-		
+
 		// Ignoriamo l'errore della creazione cartella se già esiste
 		_ = os.MkdirAll("images", 0755)
-		
+
 		// FIX: Controllo errore os.Create
 		dst, err := os.Create(savePath)
 		if err != nil {
@@ -56,7 +56,7 @@ func (rt *_router) sendMessage(w http.ResponseWriter, r *http.Request, ps httpro
 			return
 		}
 		defer dst.Close()
-		
+
 		// FIX LINTER: Rimosso il duplicato e aggiunto il controllo errore con corpo non vuoto
 		if _, err = io.Copy(dst, file); err != nil {
 			ctx.Logger.WithError(err).Error("saving image file")

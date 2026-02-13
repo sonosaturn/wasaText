@@ -3,8 +3,8 @@ package api
 import (
 	"database/sql"
 	"encoding/json"
-	"net/http"
 	"errors"
+	"net/http"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/sonosaturn/wasatext/service/api/reqcontext"

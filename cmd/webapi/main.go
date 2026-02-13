@@ -41,8 +41,8 @@ import (
 	"github.com/sonosaturn/wasatext/service/database"
 	"github.com/sonosaturn/wasatext/service/globaltime"
 
-	"github.com/sirupsen/logrus"     // Verifica che questi siano rimasti invariati
 	"github.com/ardanlabs/conf"
+	"github.com/sirupsen/logrus" // Verifica che questi siano rimasti invariati
 )
 
 // main is the program entry point. The only purpose of this function is to call run() and set the exit code if there is

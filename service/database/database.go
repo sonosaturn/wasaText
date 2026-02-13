@@ -18,8 +18,8 @@ type Conversation struct {
 	Title               string `json:"title"`
 	PhotoURL            string `json:"photo_url"`
 	IsGroup             bool   `json:"is_group"`
-	LastMessageAt       string `json:"last_message_at"`        // Orario ultimo messaggio
-	LastMessagePreview  string `json:"last_message_preview"`   // Anteprima testo o "Foto"
+	LastMessageAt       string `json:"last_message_at"`      // Orario ultimo messaggio
+	LastMessagePreview  string `json:"last_message_preview"` // Anteprima testo o "Foto"
 	OtherUserID         string `json:"other_user_id,omitempty"`
 	LastMessageSenderID string `json:"last_message_sender_id"`
 	UnreadCount         int    `json:"unread_count"`

@@ -23,7 +23,7 @@ func (rt *_router) forwardMessage(w http.ResponseWriter, r *http.Request, ps htt
 			ctx.UserID = strings.TrimPrefix(authHeader, "Bearer ")
 		}
 	}
-	
+
 	// 2. Leggi dal body quale messaggio vogliamo inoltrare
 	var body struct {
 		SourceMessageID string `json:"message_id"`

@@ -9,13 +9,13 @@ import (
 )
 
 type conversationSummaryResponse struct {
-	ID                 string `json:"id"`
-	IsGroup            bool   `json:"is_group"`
-	Title              string `json:"title"`
-	PhotoURL           string `json:"photo_url"`
-	OtherUserID        string `json:"other_user_id"`
-	LastMessageAt      string `json:"last_message_at"`
-	LastMessagePreview string `json:"last_message_preview"`
+	ID                  string `json:"id"`
+	IsGroup             bool   `json:"is_group"`
+	Title               string `json:"title"`
+	PhotoURL            string `json:"photo_url"`
+	OtherUserID         string `json:"other_user_id"`
+	LastMessageAt       string `json:"last_message_at"`
+	LastMessagePreview  string `json:"last_message_preview"`
 	LastMessageSenderID string `json:"last_message_sender_id"`
 	UnreadCount         int    `json:"unread_count"`
 }
@@ -31,15 +31,15 @@ func (rt *_router) getMyConversations(w http.ResponseWriter, r *http.Request, _ 
 	out := make([]conversationSummaryResponse, 0, len(convs))
 	for _, c := range convs {
 		out = append(out, conversationSummaryResponse{
-			ID:                 c.ID,
-			IsGroup:            c.IsGroup,
-			Title:              c.Title,
-			PhotoURL:           c.PhotoURL,
-			OtherUserID:        c.OtherUserID,
-			LastMessageAt:      c.LastMessageAt,      // Mappato dal DB
-			LastMessagePreview: c.LastMessagePreview, // Mappato dal DB
-    		LastMessageSenderID: c.LastMessageSenderID,
-    		UnreadCount:         c.UnreadCount,
+			ID:                  c.ID,
+			IsGroup:             c.IsGroup,
+			Title:               c.Title,
+			PhotoURL:            c.PhotoURL,
+			OtherUserID:         c.OtherUserID,
+			LastMessageAt:       c.LastMessageAt,      // Mappato dal DB
+			LastMessagePreview:  c.LastMessagePreview, // Mappato dal DB
+			LastMessageSenderID: c.LastMessageSenderID,
+			UnreadCount:         c.UnreadCount,
 		})
 	}
 

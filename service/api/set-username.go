@@ -11,7 +11,7 @@ import (
 
 func (rt *_router) setUsername(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 	idStr := ps.ByName("userId")
-	
+
 	// Fallback: se il middleware non ha settato ctx.UserID, proviamo a leggerlo dall'header
 	if ctx.UserID == "" {
 		authHeader := r.Header.Get("Authorization")

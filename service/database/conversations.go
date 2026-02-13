@@ -1,7 +1,6 @@
 package database
 
 import (
-	
 	"errors"
 	"github.com/gofrs/uuid"
 )
@@ -230,12 +229,12 @@ func (db *appdbimpl) LeaveConversation(conversationID string, userID string) err
 
 // MarkConversationAsRead aggiorna il timestamp di lettura dell'utente
 func (db *appdbimpl) MarkConversationAsRead(conversationID string, userID string) error {
-    // Usiamo CURRENT_TIMESTAMP per coerenza con il resto del database.
-    // Rimuoviamo last_seen_at che causava l'errore di sintassi.
-    _, err := db.c.Exec(`
+	// Usiamo CURRENT_TIMESTAMP per coerenza con il resto del database.
+	// Rimuoviamo last_seen_at che causava l'errore di sintassi.
+	_, err := db.c.Exec(`
         UPDATE conversation_members 
         SET last_read_at = CURRENT_TIMESTAMP
         WHERE conversation_id = ? AND user_id = ?
     `, conversationID, userID)
-    return err
+	return err
 }

@@ -28,9 +28,9 @@ func (rt *_router) searchUsers(w http.ResponseWriter, r *http.Request, ps httpro
 		Username string `json:"username"`
 		PhotoURL string `json:"photo_url"` // <--- AGGIUNTO QUESTO CAMPO
 	}
-	
+
 	response := make([]UserResponse, 0)
-	
+
 	for _, u := range usersDB {
 		response = append(response, UserResponse{
 			ID:       u.ID,

@@ -37,41 +37,41 @@ func (db *appdbimpl) DoLogin(username string) (string, error) {
 
 // GetUser returns the user identified by id. (RINOMINATA PER MATCHARE INTERFACCIA)
 func (db *appdbimpl) GetUser(id string) (User, error) {
-    var u User
-    err := db.c.QueryRow(`
+	var u User
+	err := db.c.QueryRow(`
         SELECT id, username, COALESCE(photo_url, '') 
         FROM users 
         WHERE id = ?`, id).Scan(&u.ID, &u.Username, &u.PhotoURL)
-    
-    if err != nil {
-        return User{}, err
-    }
-    return u, nil
+
+	if err != nil {
+		return User{}, err
+	}
+	return u, nil
 }
 
 // SearchUsers searches for users by username
 func (db *appdbimpl) SearchUsers(query string) ([]User, error) {
-    searchQuery := "%" + query + "%"
-    rows, err := db.c.Query(`
+	searchQuery := "%" + query + "%"
+	rows, err := db.c.Query(`
         SELECT id, username, COALESCE(photo_url, '')
         FROM users 
         WHERE username LIKE ? 
         ORDER BY username ASC
     `, searchQuery)
-    if err != nil {
-        return nil, err
-    }
-    defer rows.Close()
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-    var users []User
-    for rows.Next() {
-        var u User
-        if err := rows.Scan(&u.ID, &u.Username, &u.PhotoURL); err != nil {
-            return nil, err
-        }
-        users = append(users, u)
-    }
-    return users, rows.Err()
+	var users []User
+	for rows.Next() {
+		var u User
+		if err := rows.Scan(&u.ID, &u.Username, &u.PhotoURL); err != nil {
+			return nil, err
+		}
+		users = append(users, u)
+	}
+	return users, rows.Err()
 }
 
 // SetUserPhoto updates the photo URL for the user.
@@ -86,7 +86,7 @@ func (db *appdbimpl) SetUsername(id string, newName string) (bool, error) {
 	err := db.c.QueryRow("SELECT id FROM users WHERE username = ?", newName).Scan(&otherId)
 	if err == nil {
 		if otherId != id {
-			return false, nil 
+			return false, nil
 		}
 		return true, nil
 	} else if !errors.Is(err, sql.ErrNoRows) {

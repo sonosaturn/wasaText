@@ -2,9 +2,9 @@ package api
 
 import (
 	"database/sql"
+	"errors"
 	"net/http"
 	"strings"
-	"errors"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/sonosaturn/wasatext/service/api/reqcontext"

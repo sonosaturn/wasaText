@@ -1,605 +1,286 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WasaText</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css">
-    
-    <style>
-        body { background-color: #d1d7db; height: 100vh; display: flex; flex-direction: column; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; }
-        .main-container { height: calc(100vh - 40px); display: flex; overflow: hidden; max-width: 1600px; margin: 20px auto; background: white; border-radius: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 98%; }
-        .sidebar { width: 350px; border-right: 1px solid #e9edef; display: flex; flex-direction: column; background: #fff; height: 100%; }
-        .sidebar-header { padding: 10px 16px; background: #f0f2f5; display: flex; align-items: center; justify-content: space-between; height: 60px; border-right: 1px solid #e9edef; flex-shrink: 0; }
-        .avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background-color: #dfe5e7; }
-        .avatar-lg { width: 40px; height: 40px; cursor: pointer; }
-        .avatar-sm { width: 30px; height: 30px; margin-right: 10px; }
-        .search-box { padding: 8px; background: #fff; border-bottom: 1px solid #f0f2f5; }
-        .search-input { background-color: #f0f2f5; border: none; font-size: 0.9rem; border-radius: 8px; padding: 7px 15px; }
-        .search-input:focus { background-color: #f0f2f5; box-shadow: none; }
-        .chat-list { flex: 1; overflow-y: auto; background: #fff; }
-        .chat-item { padding: 12px 15px; cursor: pointer; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #f5f6f6; transition: background 0.2s; }
-        .chat-item:hover { background-color: #f5f6f6; }
-        .chat-item.active { background-color: #f0f2f5; }
-        .chat-area { flex: 1; display: flex; flex-direction: column; background: #efeae2; position: relative; height: 100%; }
-        .chat-area::before { content: ""; position: absolute; top:0; left:0; right:0; bottom:0; opacity: 0.4; pointer-events: none; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
-        .chat-header { padding: 10px 16px; background: #f0f2f5; border-bottom: 1px solid #e9edef; display: flex; align-items: center; gap: 15px; height: 60px; z-index: 10; flex-shrink: 0;}
-        .messages-box { flex: 1; overflow-y: auto; padding: 20px 50px; display: flex; flex-direction: column; gap: 8px; z-index: 5; }
-        .message-input-area { padding: 10px 16px; background: #f0f2f5; display: flex; align-items: center; gap: 10px; z-index: 10; position: relative; flex-shrink: 0; }
-        .msg-input { border-radius: 8px; border: none; padding: 9px 12px; font-size: 0.95rem; }
-        .msg-input:focus { box-shadow: none; }
-        .image-preview-bar { position: absolute; bottom: 100%; left: 0; width: 100%; background: #e9edef; padding: 10px; display: flex; align-items: center; border-top: 1px solid #ccc; }
-        .preview-thumb { height: 50px; width: 50px; object-fit: cover; border-radius: 5px; margin-right: 10px; border: 1px solid #fff; }
-        .msg-row { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 20px; }
-        .msg-row.mine { flex-direction: row-reverse; }
-        
-        /* FIX: Gestione testo lungo */
-        .msg { 
-            max-width: 65%; 
-            padding: 6px 9px; 
-            border-radius: 7.5px; 
-            font-size: 0.9rem; 
-            line-height: 19px; 
-            position: relative; 
-            box-shadow: 0 1px 0.5px rgba(0,0,0,0.13); 
-            
-            /* Regole per mandare a capo */
-            word-wrap: break-word; 
-            overflow-wrap: break-word; 
-            word-break: break-word; 
-            white-space: pre-wrap; 
-        }
-
-        .msg-in { background-color: #fff; border-top-left-radius: 0; }
-        .msg-out { background-color: #d9fdd3; border-top-right-radius: 0; }
-        .msg-image { display: block; max-width: 100%; max-height: 300px; object-fit: contain; border-radius: 5px; margin-bottom: 5px; cursor: pointer; background-color: #f0f0f0; min-height: 50px; }
-        .msg-time { font-size: 0.65rem; color: #667781; text-align: right; margin-top: 2px; margin-left: 10px; float: right; position: relative; top: 4px;}
-        .member-chip { display: inline-flex; align-items: center; background: #e9edef; padding: 2px 8px; border-radius: 12px; font-size: 0.85rem; margin-right: 5px; margin-bottom: 5px; }
-        .msg-status { display: inline-block; margin-left: 3px; font-size: 0.75rem; position: relative; top: 2px; }
-        .status-sent { color: #8696a0; } .status-read { color: #53bdeb; }
-        .msg-dropdown-trigger { display: none; position: absolute; top: 0; right: 0; padding: 5px 10px 5px 15px; border-top-right-radius: 7.5px; cursor: pointer; color: #667781; z-index: 10; }
-        .msg-in .msg-dropdown-trigger { background: linear-gradient(to right, transparent, #fff 40%); }
-        .msg-out .msg-dropdown-trigger { background: linear-gradient(to right, transparent, #d9fdd3 40%); }
-        .msg:hover .msg-dropdown-trigger { display: block; }
-        
-        /* FIX: Dropdown Menu */
-        .msg-dropdown-menu { 
-            position: absolute; 
-            top: 25px; 
-            right: 5px; 
-            background: white; 
-            border-radius: 6px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
-            z-index: 1000; 
-            min-width: 160px; 
-            padding: 5px 0; 
-            display: flex; 
-            flex-direction: column; 
-        }
-        
-        /* FIX: Allinea a sinistra per messaggi ricevuti */
-        .msg-in .msg-dropdown-menu {
-            right: auto; 
-            left: 5px;
-        }
-
-        .menu-item { padding: 10px 15px; cursor: pointer; font-size: 0.95rem; color: #3b4a54; }
-        .menu-item:hover { background: #f5f6f6; }
-        .menu-item.danger { color: #dc3545; }
-        .reactions-selector { display: flex; gap: 8px; padding: 8px 10px; background: #f0f2f5; border-bottom: 1px solid #ddd; justify-content: center; }
-        .reaction-option { font-size: 1.4rem; cursor: pointer; transition: transform 0.1s; }
-        .reaction-option:hover { transform: scale(1.2); }
-        .msg-reactions-display { position: absolute; bottom: -24px; right: 0; background: white; border-radius: 16px; padding: 3px 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); font-size: 0.9rem; display: flex; gap: 5px; border: 1px solid #e9edef; z-index: 5; cursor: pointer; align-items: center; }
-        .msg-in .msg-reactions-display { right: auto; left: 0; }
-        
-        /* NUOVO: Stile per tooltip reazioni */
-        /* Stile per il contenitore della reazione */
-        .reaction-item {
-            cursor: help;
-            margin-right: 4px;
-            padding: 1px 4px;
-            border-radius: 4px;
-            transition: background-color 0.2s;
-            position: relative; /* Necessario per posizionare il tooltip */
-        }
-
-        .reaction-item:hover {
-            background-color: #f0f2f5;
-        }
-
-        /* Stile per il Tooltip Personalizzato (Istantaneo) */
-        .reaction-item .tooltip-text {
-            visibility: hidden;
-            width: auto;
-            min-width: 80px;
-            background-color: rgba(0, 0, 0, 0.8);
-            color: #fff;
-            text-align: center;
-            border-radius: 6px;
-            padding: 5px 8px;
-            position: absolute;
-            z-index: 2000;
-            bottom: 125%; /* Lo posiziona sopra l'emoji */
-            left: 50%;
-            transform: translateX(-50%); /* Centra perfettamente */
-            font-size: 0.75rem;
-            white-space: nowrap; /* Evita che il nome vada a capo */
-            opacity: 0;
-            transition: opacity 0.2s;
-            pointer-events: none; /* Evita che il mouse ci finisca sopra */
-        }
-
-        /* Quando passi il mouse, appare subito */
-        .reaction-item:hover .tooltip-text {
-            visibility: visible;
-            opacity: 1;
-        }
-        .reaction-item:hover {
-            background-color: #f0f2f5;
-        }
-
-        .reply-preview-bar { position: absolute; bottom: 100%; left: 0; width: 100%; background: #f0f2f5; padding: 10px; border-left: 5px solid #00a884; display: flex; flex-direction: column; z-index: 20; border-top: 1px solid #ccc; }
-        .quoted-msg-block { background: rgba(0,0,0,0.05); border-left: 4px solid #00a884; border-radius: 4px; padding: 5px; margin-bottom: 5px; font-size: 0.85rem; display: flex; flex-direction: column; cursor: pointer; }
-        .quoted-sender { font-weight: bold; color: #00a884; font-size: 0.75rem; }
-        .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; max-height: 250px; overflow-y: auto; }
-        .gallery-item { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; cursor: pointer; border: 1px solid #eee; }
-        .empty-gallery { text-align: center; padding: 20px; color: #8696a0; font-size: 0.9rem; background: #f9f9f9; border-radius: 8px; }
-        .unread-badge { background-color: #00a884; color: white; border-radius: 50%; min-width: 20px; height: 20px; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; font-weight: bold; padding: 0 5px; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WasaText</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.10.5/font/bootstrap-icons.min.css">
+  <style>
+    body { background-color: #d1d7db; height: 100vh; display: flex; flex-direction: column; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; }
+    .main-container { height: calc(100vh - 40px); display: flex; overflow: hidden; max-width: 1600px; margin: 20px auto; background: white; border-radius: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1); width: 98%; }
+    .sidebar { width: 350px; border-right: 1px solid #e9edef; display: flex; flex-direction: column; background: #fff; height: 100%; }
+    .sidebar-header { padding: 10px 16px; background: #f0f2f5; display: flex; align-items: center; justify-content: space-between; height: 60px; border-right: 1px solid #e9edef; flex-shrink: 0; }
+    .avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background-color: #dfe5e7; }
+    .avatar-lg { width: 40px; height: 40px; cursor: pointer; }
+    .avatar-sm { width: 30px; height: 30px; margin-right: 10px; }
+    .search-box { padding: 8px; background: #fff; border-bottom: 1px solid #f0f2f5; }
+    .search-input { background-color: #f0f2f5; border: none; font-size: 0.9rem; border-radius: 8px; padding: 7px 15px; }
+    .search-input:focus { background-color: #f0f2f5; box-shadow: none; }
+    .chat-list { flex: 1; overflow-y: auto; background: #fff; }
+    .chat-item { padding: 12px 15px; cursor: pointer; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid #f5f6f6; transition: background 0.2s; }
+    .chat-item:hover { background-color: #f5f6f6; }
+    .chat-item.active { background-color: #f0f2f5; }
+    .chat-area { flex: 1; display: flex; flex-direction: column; background: #efeae2; position: relative; height: 100%; }
+    .chat-area::before { content: ""; position: absolute; top:0; left:0; right:0; bottom:0; opacity: 0.4; pointer-events: none; background-image: url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
+    .chat-header { padding: 10px 16px; background: #f0f2f5; border-bottom: 1px solid #e9edef; display: flex; align-items: center; gap: 15px; height: 60px; z-index: 10; flex-shrink: 0;}
+    .messages-box { flex: 1; overflow-y: auto; padding: 20px 50px; display: flex; flex-direction: column; gap: 8px; z-index: 5; }
+    .message-input-area { padding: 10px 16px; background: #f0f2f5; display: flex; align-items: center; gap: 10px; z-index: 10; position: relative; flex-shrink: 0; }
+    .msg-input { border-radius: 8px; border: none; padding: 9px 12px; font-size: 0.95rem; }
+    .msg-input:focus { box-shadow: none; }
+    .image-preview-bar { position: absolute; bottom: 100%; left: 0; width: 100%; background: #e9edef; padding: 10px; display: flex; align-items: center; border-top: 1px solid #ccc; }
+    .preview-thumb { height: 50px; width: 50px; object-fit: cover; border-radius: 5px; margin-right: 10px; border: 1px solid #fff; }
+    .msg-row { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 20px; }
+    .msg-row.mine { flex-direction: row-reverse; }
+    .msg { max-width: 65%; padding: 6px 9px; border-radius: 7.5px; font-size: 0.9rem; line-height: 19px; position: relative; box-shadow: 0 1px 0.5px rgba(0,0,0,0.13); word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; white-space: pre-wrap; }
+    .msg-in { background-color: #fff; border-top-left-radius: 0; }
+    .msg-out { background-color: #d9fdd3; border-top-right-radius: 0; }
+    .msg-image { display: block; max-width: 100%; max-height: 300px; object-fit: contain; border-radius: 5px; margin-bottom: 5px; cursor: pointer; background-color: #f0f0f0; min-height: 50px; }
+    .msg-time { font-size: 0.65rem; color: #667781; text-align: right; margin-top: 2px; margin-left: 10px; float: right; position: relative; top: 4px;}
+    .member-chip { display: inline-flex; align-items: center; background: #e9edef; padding: 2px 8px; border-radius: 12px; font-size: 0.85rem; margin-right: 5px; margin-bottom: 5px; }
+    .msg-status { display: inline-block; margin-left: 3px; font-size: 0.75rem; position: relative; top: 2px; }
+    .status-sent { color: #8696a0; } .status-read { color: #53bdeb; }
+    .msg-dropdown-trigger { display: none; position: absolute; top: 0; right: 0; padding: 5px 10px 5px 15px; border-top-right-radius: 7.5px; cursor: pointer; color: #667781; z-index: 10; }
+    .msg-in .msg-dropdown-trigger { background: linear-gradient(to right, transparent, #fff 40%); }
+    .msg-out .msg-dropdown-trigger { background: linear-gradient(to right, transparent, #d9fdd3 40%); }
+    .msg:hover .msg-dropdown-trigger { display: block; }
+    .msg-dropdown-menu { position: absolute; top: 25px; right: 5px; background: white; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; min-width: 160px; padding: 5px 0; display: flex; flex-direction: column; }
+    .msg-in .msg-dropdown-menu { right: auto; left: 5px; }
+    .menu-item { padding: 10px 15px; cursor: pointer; font-size: 0.95rem; color: #3b4a54; }
+    .menu-item:hover { background: #f5f6f6; }
+    .menu-item.danger { color: #dc3545; }
+    .reactions-selector { display: flex; gap: 8px; padding: 8px 10px; background: #f0f2f5; border-bottom: 1px solid #ddd; justify-content: center; }
+    .reaction-option { font-size: 1.4rem; cursor: pointer; transition: transform 0.1s; }
+    .reaction-option:hover { transform: scale(1.2); }
+    .msg-reactions-display { position: absolute; bottom: -24px; right: 0; background: white; border-radius: 16px; padding: 3px 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); font-size: 0.9rem; display: flex; gap: 5px; border: 1px solid #e9edef; z-index: 5; cursor: pointer; align-items: center; }
+    .msg-in .msg-reactions-display { right: auto; left: 0; }
+    .reaction-item { cursor: help; margin-right: 4px; padding: 1px 4px; border-radius: 4px; transition: background-color 0.2s; position: relative; }
+    .reaction-item:hover { background-color: #f0f2f5; }
+    .reaction-item .tooltip-text { visibility: hidden; width: auto; min-width: 80px; background-color: rgba(0, 0, 0, 0.8); color: #fff; text-align: center; border-radius: 6px; padding: 5px 8px; position: absolute; z-index: 2000; bottom: 125%; left: 50%; transform: translateX(-50%); font-size: 0.75rem; white-space: nowrap; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+    .reaction-item:hover .tooltip-text { visibility: visible; opacity: 1; }
+    .reply-preview-bar { position: absolute; bottom: 100%; left: 0; width: 100%; background: #f0f2f5; padding: 10px; border-left: 5px solid #00a884; display: flex; flex-direction: column; z-index: 20; border-top: 1px solid #ccc; }
+    .quoted-msg-block { background: rgba(0,0,0,0.05); border-left: 4px solid #00a884; border-radius: 4px; padding: 5px; margin-bottom: 5px; font-size: 0.85rem; display: flex; flex-direction: column; cursor: pointer; }
+    .quoted-sender { font-weight: bold; color: #00a884; font-size: 0.75rem; }
+    .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; max-height: 250px; overflow-y: auto; }
+    .gallery-item { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; cursor: pointer; border: 1px solid #eee; }
+    .empty-gallery { text-align: center; padding: 20px; color: #8696a0; font-size: 0.9rem; background: #f9f9f9; border-radius: 8px; }
+    .unread-badge { background-color: #00a884; color: white; border-radius: 50%; min-width: 20px; height: 20px; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; font-weight: bold; padding: 0 5px; }
+  </style>
 </head>
 <body>
-
-<div id="app" @click="closeAllMenus">
+  <div id="app" @click="closeAllMenus">
     <div v-if="!token" class="login-wrapper" style="height: 100vh; display: flex; align-items: center; justify-content: center; background: #d1d7db;">
-        <div class="login-container" style="width: 100%; max-width: 450px; padding: 40px; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center;">
-            <h2 class="mb-4">WasaText</h2>
-            <input type="text" class="form-control mb-3" v-model="username" @keyup.enter="doLogin" placeholder="Nome utente">
-            <button class="btn btn-success w-100" @click="doLogin" :disabled="username.length < 3">ENTRA</button>
-            <div v-if="errorMsg" class="alert alert-danger mt-3 small">{{ errorMsg }}</div>
-        </div>
+      <div class="login-container" style="width: 100%; max-width: 450px; padding: 40px; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center;">
+        <h2 class="mb-4">WasaText</h2>
+        <input type="text" class="form-control mb-3" v-model="username" @keyup.enter="doLogin" placeholder="Nome utente">
+        <button class="btn btn-success w-100" @click="doLogin" :disabled="username.length < 3">ENTRA</button>
+        <div v-if="errorMsg" class="alert alert-danger mt-3 small">{{ errorMsg }}</div>
+      </div>
     </div>
-
     <div v-else class="main-container">
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <div class="position-relative" style="cursor: pointer;" @click="$refs.fileInput.click()">
-                    <img :src="getFullUrl(myPhoto)" class="avatar avatar-lg" @error="handleImgError">
-                    <input type="file" ref="fileInput" class="d-none" accept="image/*" @change="uploadPhoto">
-                </div>
-                
-                <div class="flex-grow-1 ms-3 d-flex align-items-center">
-                    <span v-if="!isEditingName" class="fw-bold me-2">{{ username }}</span>
-                    <input v-else type="text" class="form-control form-control-sm me-2" v-model="tempUsername" @keyup.enter="saveUsername" @keyup.esc="isEditingName = false" style="max-width: 150px;">
-                    
-                    <i v-if="!isEditingName" class="bi bi-pencil-fill text-muted" style="cursor: pointer; font-size: 0.8rem;" @click="startEditName"></i>
-                    <i v-else class="bi bi-check-circle-fill text-success" style="cursor: pointer;" @click="saveUsername"></i>
-                </div>
-                <button class="btn btn-sm btn-link text-muted" @click="doLogout"><i class="bi bi-box-arrow-right" style="font-size: 1.2rem;"></i></button>
-            </div>
-            <div class="search-box">
-                <div class="input-group mb-2">
-                    <input type="text" class="form-control search-input" placeholder="Cerca utente..." v-model="searchQuery" @keyup.enter="searchAndCreate">
-                    <button class="btn btn-light btn-sm border-0" @click="searchAndCreate"><i class="bi bi-chat-dots"></i></button>
-                </div>
-                <button class="btn btn-outline-primary w-100 btn-sm" data-bs-toggle="modal" data-bs-target="#createGroupModal">Crea Nuovo Gruppo</button>
-            </div>
-            <div class="chat-list">
-                <div v-for="chat in conversations" :key="chat.id" class="chat-item" :class="{ active: selectedChat && selectedChat.id === chat.id }" @click="selectChat(chat)">
-                    <img :src="getFullUrl(getChatAvatar(chat))" class="avatar" @error="handleImgError">
-                    <div class="flex-grow-1 overflow-hidden">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="fw-bold text-truncate">{{ getChatName(chat) }}</span>
-                            <span class="small text-muted" v-if="chat.last_message_at" :style="{ color: chat.unread_count > 0 ? '#00a884' : '' }">
-                                {{ formatTime(chat.last_message_at) }}
-                            </span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <small class="text-muted text-truncate d-block">
-                                <span v-if="chat.last_message_sender_id === myId" class="text-muted">Tu: </span>
-                                {{ chat.last_message_preview || (chat.is_group ? 'Gruppo creato' : 'Nuova chat') }}
-                            </small>
-                            <div v-if="chat.unread_count > 0 && (!selectedChat || selectedChat.id !== chat.id)" class="unread-badge">
-                                {{ chat.unread_count }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <div class="position-relative" style="cursor: pointer;" @click="$refs.fileInput.click()">
+            <img :src="getFullUrl(myPhoto)" class="avatar avatar-lg" @error="handleImgError" alt="Profilo">
+            <input type="file" ref="fileInput" class="d-none" accept="image/*" @change="uploadPhoto">
+          </div>
+          <div class="flex-grow-1 ms-3 d-flex align-items-center">
+            <span v-if="!isEditingName" class="fw-bold me-2">{{ username }}</span>
+            <input v-else type="text" class="form-control form-control-sm me-2" v-model="tempUsername" @keyup.enter="saveUsername" @keyup.esc="isEditingName = false" style="max-width: 150px;">
+            <i v-if="!isEditingName" class="bi bi-pencil-fill text-muted" style="cursor: pointer; font-size: 0.8rem;" @click="startEditName"></i>
+            <i v-else class="bi bi-check-circle-fill text-success" style="cursor: pointer;" @click="saveUsername"></i>
+          </div>
+          <button class="btn btn-sm btn-link text-muted" @click="doLogout"><i class="bi bi-box-arrow-right" style="font-size: 1.2rem;"></i></button>
         </div>
-
-        <div class="chat-area">
-            <div v-if="selectedChat" class="h-100 d-flex flex-column">
-                <div class="chat-header">
-                    <img :src="getFullUrl(getChatAvatar(selectedChat))" class="avatar avatar-sm" @error="handleImgError">
-                    <div class="d-flex flex-column flex-grow-1" style="cursor: pointer;" @click="openInfoModal()">
-                        <span class="fw-bold">{{ getChatName(selectedChat) }}</span>
-                        <span class="small text-muted" style="font-size: 0.75rem;">{{ selectedChat.is_group ? 'Clicca per info gruppo' : 'Clicca per info contatto' }}</span>
-                    </div>
-                </div>
-
-                <div class="messages-box" ref="msgBox">
-                    <div v-for="msg in messages" :key="msg.id" class="msg-row" :class="msg.senderId === myId ? 'mine' : ''">
-                        <img v-if="msg.senderId !== myId && selectedChat.is_group" :src="getFullUrl(getUserAvatar(msg.senderId))" class="avatar avatar-sm" style="width: 25px; height: 25px; align-self: flex-start;" @error="handleImgError">
-                        <div class="msg position-relative" :class="msg.senderId === myId ? 'msg-out' : 'msg-in'">
-                            <div class="msg-dropdown-trigger" @click.stop="toggleMenu(msg.id)"><i class="bi bi-chevron-down" style="font-size: 0.8rem; font-weight: bold;"></i></div>
-                            <div v-if="activeMenuMsgId === msg.id" class="msg-dropdown-menu" @click.stop>
-                                <div class="reactions-selector">
-                                    <span v-for="emoji in ['👍','❤️','😂','😮','😢','🙏']" :key="emoji" class="reaction-option" @click="reactToMessage(msg.id, emoji)">{{emoji}}</span>
-                                </div>
-                                <div class="menu-item" @click="startReply(msg)">Rispondi</div>
-                                <div class="menu-item" @click="openForwardModal(msg)">Inoltra ⏩</div>
-                                <div v-if="msg.senderId === myId" class="menu-item danger" @click="deleteMessage(msg.id)">Elimina</div>
-                            </div>
-                            <div v-if="msg.reply_to_id" class="quoted-msg-block" @click="scrollToMessage(msg.reply_to_id)">
-                                <span class="quoted-sender">{{ getSenderNameOfReply(msg.reply_to_id) }}</span>
-                                <span class="text-truncate">{{ getContentOfReply(msg.reply_to_id) }}</span>
-                            </div>
-                            <div v-if="selectedChat.is_group && msg.senderId !== myId" class="small fw-bold mb-1" style="color: #d85c2c; font-size: 0.75rem;">{{ getUserName(msg.senderId) }}</div>
-                            <div v-if="msg.photo_url"><a :href="getFullUrl(msg.photo_url)" target="_blank"><img :src="getFullUrl(msg.photo_url)" class="msg-image" @error="handleImgError"></a></div>
-                            {{ msg.content }}
-                            <span class="msg-time">{{ formatTime(msg.timestamp) }} 
-                                <span v-if="msg.senderId === myId" class="msg-status">
-                                    <i v-if="msg.status === 2" class="bi bi-check2-all status-read" title="Letto"></i>
-                                    <i v-else-if="msg.status === 1" class="bi bi-check2-all" title="Ricevuto" style="color: grey"></i>
-                                    <i v-else class="bi bi-check2 status-sent" title="Inviato"></i>
-                                </span>
-                            </span>
-                            
-                            <div v-if="msg.reactions && msg.reactions.length > 0" class="msg-reactions-display">
-                                <span v-for="(count, emoji) in groupReactions(msg.reactions)" 
-                                      :key="emoji" 
-                                      class="reaction-item">
-                                    
-                                    {{ emoji }} 
-                                    <span v-if="count > 1" style="font-weight: bold; font-size: 0.8rem; color: #666;">
-                                        {{ count }}
-                                    </span>
-                            
-                                    <span class="tooltip-text">
-                                        {{ getReactionAuthors(msg.reactions, emoji) }}
-                                    </span>
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="message-input-area">
-                    <div v-if="replyingToMsg" class="reply-preview-bar">
-                        <div class="d-flex justify-content-between align-items-center mb-1"><span class="fw-bold" style="color: #00a884; font-size: 0.8rem;">Risposta a {{ getUserName(replyingToMsg.senderId) }}</span><i class="bi bi-x-circle-fill text-muted" style="cursor: pointer;" @click="cancelReply"></i></div>
-                        <div class="text-muted text-truncate small" style="background: rgba(0,0,0,0.03); padding: 4px; border-radius: 4px;">{{ replyingToMsg.content || '📷 Foto' }}</div>
-                    </div>
-                    <div v-if="selectedFile" class="image-preview-bar"><img :src="previewUrl" class="preview-thumb"><span class="small text-muted me-auto">{{ selectedFile.name }}</span><button class="btn btn-sm btn-close" @click="clearFile"></button></div>
-                    <input type="file" ref="msgFileInput" class="d-none" accept="image/*" @change="onMessageFileSelected">
-                    <button class="btn btn-link text-secondary" @click="$refs.msgFileInput.click()"><i class="bi bi-paperclip" style="font-size: 1.3rem;"></i></button>
-                    <input type="text" class="form-control msg-input" placeholder="Scrivi un messaggio" v-model="newMessage" @keyup.enter="sendMessage">
-                    <button class="btn text-muted" @click="sendMessage" :disabled="!newMessage.trim() && !selectedFile"><i class="bi bi-send-fill" style="font-size: 1.2rem; color: #54656f;"></i></button>
-                </div>
-            </div>
-            <div v-else class="d-flex flex-column align-items-center justify-content-center h-100 text-muted"><h3>WasaText per Web</h3><p class="small">Invia e ricevi messaggi in tempo reale.</p></div>
+        <div class="search-box">
+          <div class="input-group mb-2">
+            <input type="text" class="form-control search-input" placeholder="Cerca utente..." v-model="searchQuery" @keyup.enter="searchAndCreate">
+            <button class="btn btn-light btn-sm border-0" @click="searchAndCreate"><i class="bi bi-chat-dots"></i></button>
+          </div>
+          <button class="btn btn-outline-primary w-100 btn-sm" data-bs-toggle="modal" data-bs-target="#createGroupModal">Crea Nuovo Gruppo</button>
         </div>
+        <div class="chat-list">
+          <div v-for="chat in conversations" :key="chat.id" class="chat-item" :class="{ active: selectedChat && selectedChat.id === chat.id }" @click="selectChat(chat)">
+            <img :src="getFullUrl(getChatAvatar(chat))" class="avatar" @error="handleImgError" alt="Avatar">
+            <div class="flex-grow-1 overflow-hidden">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="fw-bold text-truncate">{{ getChatName(chat) }}</span>
+                <span class="small text-muted" v-if="chat.last_message_at" :style="{ color: chat.unread_count > 0 ? '#00a884' : '' }">
+                  {{ formatTime(chat.last_message_at) }}
+                </span>
+              </div>
+              <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted text-truncate d-block">
+                  <span v-if="chat.last_message_sender_id === myId" class="text-muted">Tu: </span>
+                  {{ chat.last_message_preview || (chat.is_group ? 'Gruppo creato' : 'Nuova chat') }}
+                </small>
+                <div v-if="chat.unread_count > 0 && (!selectedChat || selectedChat.id !== chat.id)" class="unread-badge">
+                  {{ chat.unread_count }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="chat-area">
+        <div v-if="selectedChat" class="h-100 d-flex flex-column">
+          <div class="chat-header">
+            <img :src="getFullUrl(getChatAvatar(selectedChat))" class="avatar avatar-sm" @error="handleImgError" alt="Avatar">
+            <div class="d-flex flex-column flex-grow-1" style="cursor: pointer;" @click="openInfoModal()">
+              <span class="fw-bold">{{ getChatName(selectedChat) }}</span>
+              <span class="small text-muted" style="font-size: 0.75rem;">{{ selectedChat.is_group ? 'Clicca per info gruppo' : 'Clicca per info contatto' }}</span>
+            </div>
+          </div>
+          <div class="messages-box" ref="msgBox">
+            <div v-for="msg in messages" :key="msg.id" class="msg-row" :class="msg.senderId === myId ? 'mine' : ''">
+              <img v-if="msg.senderId !== myId && selectedChat.is_group" :src="getFullUrl(getUserAvatar(msg.senderId))" class="avatar avatar-sm" style="width: 25px; height: 25px; align-self: flex-start;" @error="handleImgError" alt="Sender">
+              <div class="msg position-relative" :class="msg.senderId === myId ? 'msg-out' : 'msg-in'">
+                <div class="msg-dropdown-trigger" @click.stop="toggleMenu(msg.id)"><i class="bi bi-chevron-down" style="font-size: 0.8rem; font-weight: bold;"></i></div>
+                <div v-if="activeMenuMsgId === msg.id" class="msg-dropdown-menu" @click.stop>
+                  <div class="reactions-selector">
+                    <span v-for="emoji in ['👍','❤️','😂','😮','😢','🙏']" :key="emoji" class="reaction-option" @click="reactToMessage(msg.id, emoji)">{{emoji}}</span>
+                  </div>
+                  <div class="menu-item" @click="startReply(msg)">Rispondi</div>
+                  <div class="menu-item" @click="openForwardModal(msg)">Inoltra ⏩</div>
+                  <div v-if="msg.senderId === myId" class="menu-item danger" @click="deleteMessage(msg.id)">Elimina</div>
+                </div>
+                <div v-if="msg.reply_to_id" class="quoted-msg-block" @click="scrollToMessage(msg.reply_to_id)">
+                  <span class="quoted-sender">{{ getSenderNameOfReply(msg.reply_to_id) }}</span>
+                  <span class="text-truncate">{{ getContentOfReply(msg.reply_to_id) }}</span>
+                </div>
+                <div v-if="selectedChat.is_group && msg.senderId !== myId" class="small fw-bold mb-1" style="color: #d85c2c; font-size: 0.75rem;">{{ getUserName(msg.senderId) }}</div>
+                <div v-if="msg.photo_url"><a :href="getFullUrl(msg.photo_url)" target="_blank"><img :src="getFullUrl(msg.photo_url)" class="msg-image" @error="handleImgError" alt="Inviata"></a></div>
+                {{ msg.content }}
+                <span class="msg-time">{{ formatTime(msg.timestamp) }} 
+                  <span v-if="msg.senderId === myId" class="msg-status">
+                    <i v-if="msg.status === 2" class="bi bi-check2-all status-read" title="Letto"></i>
+                    <i v-else-if="msg.status === 1" class="bi bi-check2-all" title="Ricevuto" style="color: grey"></i>
+                    <i v-else class="bi bi-check2 status-sent" title="Inviato"></i>
+                  </span>
+                </span>
+                <div v-if="msg.reactions && msg.reactions.length > 0" class="msg-reactions-display">
+                  <span v-for="(count, emoji) in groupReactions(msg.reactions)" :key="emoji" class="reaction-item">
+                    {{ emoji }} <span v-if="count > 1" style="font-weight: bold; font-size: 0.8rem; color: #666;">{{ count }}</span>
+                    <span class="tooltip-text">{{ getReactionAuthors(msg.reactions, emoji) }}</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="message-input-area">
+            <div v-if="replyingToMsg" class="reply-preview-bar">
+              <div class="d-flex justify-content-between align-items-center mb-1"><span class="fw-bold" style="color: #00a884; font-size: 0.8rem;">Risposta a {{ getUserName(replyingToMsg.senderId) }}</span><i class="bi bi-x-circle-fill text-muted" style="cursor: pointer;" @click="cancelReply"></i></div>
+              <div class="text-muted text-truncate small" style="background: rgba(0,0,0,0.03); padding: 4px; border-radius: 4px;">{{ replyingToMsg.content || '📷 Foto' }}</div>
+            </div>
+            <div v-if="selectedFile" class="image-preview-bar"><img :src="previewUrl" class="preview-thumb" alt="Preview"><span class="small text-muted me-auto">{{ selectedFile.name }}</span><button class="btn btn-sm btn-close" @click="clearFile"></button></div>
+            <input type="file" ref="msgFileInput" class="d-none" accept="image/*" @change="onMessageFileSelected">
+            <button class="btn btn-link text-secondary" @click="$refs.msgFileInput.click()"><i class="bi bi-paperclip" style="font-size: 1.3rem;"></i></button>
+            <input type="text" class="form-control msg-input" placeholder="Scrivi un messaggio" v-model="newMessage" @keyup.enter="sendMessage">
+            <button class="btn text-muted" @click="sendMessage" :disabled="!newMessage.trim() && !selectedFile"><i class="bi bi-send-fill" style="font-size: 1.2rem; color: #54656f;"></i></button>
+          </div>
+        </div>
+        <div v-else class="d-flex flex-column align-items-center justify-content-center h-100 text-muted"><h3>WasaText per Web</h3><p class="small">Invia e ricevi messaggi in tempo reale.</p></div>
+      </div>
     </div>
-    
-    <div class="modal fade" id="createGroupModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Nuovo Gruppo</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input type="text" class="form-control mb-3" v-model="newGroupName" placeholder="Nome"><div class="input-group mb-2"><input type="text" class="form-control" placeholder="Cerca..." v-model="groupMemberQuery" @keyup.enter="searchUserForGroup"><button class="btn btn-outline-secondary" @click="searchUserForGroup">Cerca</button></div><div v-if="groupSearchResults.length > 0" class="list-group mb-3"><button v-for="u in groupSearchResults" :key="u.id" class="list-group-item list-group-item-action d-flex justify-content-between" @click="addMemberToSelection(u)">{{ u.username }} <i class="bi bi-plus-circle text-primary"></i></button></div><div class="p-2 border rounded bg-light" v-if="newGroupMembers.length > 0"><span v-for="m in newGroupMembers" :key="m.id" class="member-chip">{{ m.username }} <i class="bi bi-x-circle-fill" @click="removeMemberFromSelection(m.id)"></i></span></div></div><div class="modal-footer"><button class="btn btn-primary" @click="createGroup" data-bs-dismiss="modal">Crea</button></div></div></div></div>
-    
-    <div class="modal fade" id="infoModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Info</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" v-if="selectedChat"><div class="text-center mb-4"><div class="position-relative d-inline-block" :style="{ cursor: selectedChat.is_group ? 'pointer' : 'default' }" @click="selectedChat.is_group ? $refs.groupPhotoInput.click() : null"><img :src="getFullUrl(getChatAvatar(selectedChat))" class="avatar" style="width: 80px; height: 80px;" @error="handleImgError"><span v-if="selectedChat.is_group" class="position-absolute bottom-0 end-0 bg-white border rounded-circle p-1"><i class="bi bi-camera-fill"></i></span><input v-if="selectedChat.is_group" type="file" ref="groupPhotoInput" class="d-none" accept="image/*" @change="uploadGroupPhoto"></div><div class="mt-3 d-flex justify-content-center align-items-center gap-2"><input type="text" class="form-control form-control-sm text-center fw-bold" v-model="editingGroupName" @blur="updateGroupName" @keyup.enter="updateGroupName" :disabled="!selectedChat.is_group" style="max-width: 200px; border: none; background: transparent; font-size: 1.2rem;"><i v-if="selectedChat.is_group" class="bi bi-pencil-fill text-muted small"></i></div></div><div v-if="selectedChat.is_group"><h6 class="text-muted mb-2">Partecipanti</h6><div class="list-group mb-3" style="max-height: 200px; overflow-y: auto;"><div v-for="m in currentGroupMembers" :key="m.id" class="list-group-item d-flex align-items-center"><img :src="getFullUrl(m.photo_url)" class="avatar avatar-sm me-2" @error="handleImgError"><span>{{ m.username }}</span></div></div><div class="input-group mb-2"><input type="text" class="form-control form-control-sm" placeholder="Aggiungi..." v-model="addMemberQuery" @keyup.enter="searchMemberToAdd"><button class="btn btn-outline-secondary btn-sm" @click="searchMemberToAdd">Cerca</button></div><div v-if="addMemberResults.length > 0" class="list-group mb-3"><button v-for="u in addMemberResults" :key="u.id" class="list-group-item list-group-item-action" @click="addMemberToGroup(u)">{{ u.username }} <i class="bi bi-person-plus-fill text-success"></i></button></div></div><div v-else><h6 class="text-muted mb-2">Galleria</h6><div v-if="mediaMessages.length > 0" class="gallery-grid"><img v-for="msg in mediaMessages" :key="msg.id" :src="getFullUrl(msg.photo_url)" class="gallery-item" onclick="window.open(this.src)"></div><div v-else class="empty-gallery">Nessun media</div></div></div><div class="modal-footer"><button class="btn btn-danger w-100" @click="leaveConversation" data-bs-dismiss="modal">{{ selectedChat && selectedChat.is_group ? 'Abbandona Gruppo' : 'Elimina Chat' }}</button></div></div></div></div>
-
-    <div class="modal fade" id="forwardModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Inoltra a...</h5>
-                    <button class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="text" class="form-control mb-3" placeholder="Cerca chat..." v-model="forwardSearch">
-                    <div class="list-group">
-                        <button v-for="chat in filteredForwardList" :key="chat.id" 
-                                class="list-group-item list-group-item-action d-flex align-items-center"
-                                @click="forwardToChat(chat)">
-                            <img :src="getFullUrl(getChatAvatar(chat))" class="avatar avatar-sm me-2" @error="handleImgError">
-                            <span>{{ getChatName(chat) }}</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script type="module">
-    import { createApp, reactive } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script type="module">
+    import { createApp } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
     import axios from 'https://unpkg.com/axios/dist/esm/axios.js';
-    
-    // FIX: URL Dinamico per supportare l'accesso da altri dispositivi
     const BACKEND_URL = 'http://' + window.location.hostname + ':3000';
     axios.defaults.baseURL = BACKEND_URL;
-
     createApp({
-        data() {
-            return {
-                token: localStorage.getItem('token') || null, myId: localStorage.getItem('myId') || null, username: localStorage.getItem('username') || '',
-                myPhoto: localStorage.getItem('myPhoto') || '/default.png', errorMsg: '', loading: false, conversations: [], selectedChat: null,
-                messages: [], newMessage: '', searchQuery: '', selectedFile: null, previewUrl: null, newGroupName: '', groupMemberQuery: '',
-                groupSearchResults: [], newGroupMembers: [], currentGroupMembers: [], addMemberQuery: '', addMemberResults: [], editingGroupName: '',
-                usersCache: {}, pollInterval: null, activeMenuMsgId: null, replyingToMsg: null,
-                isEditingName: false, tempUsername: '',
-                forwardSearch: '', msgToForward: null
-            }
-        },
-        computed: { 
-            mediaMessages() { return this.messages ? this.messages.filter(m => m.photo_url && m.photo_url !== '') : []; },
-            filteredForwardList() {
-                if (!this.conversations) return [];
-                return this.conversations.filter(c => {
-                    let name = this.getChatName(c).toLowerCase();
-                    return name.includes(this.forwardSearch.toLowerCase());
-                });
-            }
-        },
-        async mounted() { if (this.token) { this.setupAxios(); await this.refreshMyProfile(); await this.loadConversations(); this.startPolling(); } },
-        beforeUnmount() { this.stopPolling(); },
-        methods: {
-            setupAxios() { axios.defaults.baseURL = BACKEND_URL; axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`; },
-            getFullUrl(path) { return (!path || path === '/default.png' || path === 'null') ? '/default.png' : `${BACKEND_URL}${path}`; },
-            handleImgError(e) { if(e.target.src.includes("default.png")) return; e.target.src = "/default.png"; },
-            
-            startEditName() { this.tempUsername = this.username; this.isEditingName = true; },
-            async saveUsername() {
-                if (!this.tempUsername || this.tempUsername.length < 3) { alert("Nome troppo corto!"); return; }
-                if (this.tempUsername === this.username) { this.isEditingName = false; return; }
-                try {
-                    await axios.put(`/users/${this.myId}/username`, { username: this.tempUsername });
-                    this.username = this.tempUsername;
-                    localStorage.setItem('username', this.username);
-                    this.isEditingName = false;
-                } catch (e) {
-                    if (e.response && e.response.status === 409) { alert("Nome utente già in uso."); } 
-                    else { alert("Errore cambio nome: " + e.message); }
-                }
-            },
-
-            openForwardModal(msg) {
-                this.msgToForward = msg;
-                this.forwardSearch = '';
-                this.activeMenuMsgId = null;
-                new bootstrap.Modal(document.getElementById('forwardModal')).show();
-            },
-            async forwardToChat(targetChat) {
-                if (!this.msgToForward) return;
-                bootstrap.Modal.getInstance(document.getElementById('forwardModal')).hide();
-                try {
-                    await axios.post(`/conversations/${targetChat.id}/messages/forward`, { message_id: this.msgToForward.id });
-                    alert("Messaggio inoltrato!");
-                    if (this.selectedChat && this.selectedChat.id === targetChat.id) { await this.loadMessages(); }
-                } catch (e) { alert("Errore inoltro: " + (e.response?.data || e.message)); }
-            },
-
-            async loadConversations() {
-                try {
-                    let res = await axios.get("/conversations");
-                    let newConversations = res.data.conversations || [];
-
-                    // FIX: Sincronizzazione perfetta della chat aperta
-                    if (this.selectedChat) {
-                        // Cerchiamo la versione aggiornata della chat corrente nella nuova lista
-                        let updatedChat = newConversations.find(c => c.id === this.selectedChat.id);
-
-                        if (updatedChat) {
-                            // TRUCCO: Sostituiamo l'intero oggetto selectedChat
-                            // Questo risolve i problemi di nomi gruppo/foto che non si aggiornano
-                            updatedChat.unread_count = 0; // Forziamo letto perché la stiamo guardando
-                            this.selectedChat = updatedChat;
-                        }
-                    }
-
-                    this.conversations = newConversations;
-
-                    // FIX: Aggiornamento forzato profili utenti per le chat 1-to-1
-                    // Assicura che nuove foto e nomi si vedano subito
-                    for(let c of this.conversations) {
-                        if(!c.is_group && c.other_user_id) {
-                            await this.fetchUserInfo(c.other_user_id, true); 
-                        }
-                    }
-                } catch(e) {}
-            },
-            async selectChat(chat) { 
-                this.selectedChat = chat; 
-                chat.unread_count = 0; 
-                this.messages = []; 
-                this.replyingToMsg = null; 
-                await this.loadMessages(); 
-            },
-            async loadMessages() {
-                if(!this.selectedChat) return;
-                try {
-                    await axios.put(`/conversations/${this.selectedChat.id}/read`);
-                    let res = await axios.get(`/conversations/${this.selectedChat.id}/messages`);
-                    this.messages = res.data.messages || [];
-                    let senders = new Set(this.messages.map(m => m.senderId));
-                    for(let uid of senders) if(uid) await this.fetchUserInfo(uid);
-                    this.scrollToBottom();
-                } catch(e) {}
-            },
-            async refreshMessages() {
-                if(!this.selectedChat) return;
-                try {
-                    await axios.put(`/conversations/${this.selectedChat.id}/read`);
-                    let res = await axios.get(`/conversations/${this.selectedChat.id}/messages`);
-                    let newMsgs = res.data.messages || [];
-                    if(JSON.stringify(newMsgs) !== JSON.stringify(this.messages)) {
-                        this.messages = newMsgs;
-                        // Non chiamiamo loadConversations qui per evitare loop, 
-                        // lo gestiamo nel polling principale
-                    }
-                } catch(e) {}
-            },
-            async searchAndCreate() {
-                if (!this.searchQuery) return;
-                try {
-                    let res = await axios.get(`/users?q=${this.searchQuery}`);
-                    let users = res.data.users || [];
-                    if (users.length === 0) { alert("Utente non trovato"); return; }
-                    let target = users.find(u => u.id !== this.myId);
-                    if (!target) { alert("Non puoi creare una chat con te stesso."); return; }
-                    let createRes = await axios.post("/conversations", { otherUserId: target.id });
-                    this.searchQuery = ''; await this.loadConversations();
-                    let newChat = this.conversations.find(c => c.id === createRes.data.conversationId);
-                    if (newChat) this.selectChat(newChat);
-                } catch (e) { alert("Errore: " + e.message); }
-            },
-            async searchUserForGroup() {
-                if (!this.groupMemberQuery) return;
-                try {
-                    let res = await axios.get(`/users?q=${this.groupMemberQuery}`);
-                    let users = res.data.users || [];
-                    this.groupSearchResults = users.filter(u => u.id !== this.myId && !this.newGroupMembers.find(m => m.id === u.id));
-                } catch (e) {}
-            },
-            async searchMemberToAdd() {
-                 if (!this.addMemberQuery) return;
-                try {
-                    let res = await axios.get(`/users?q=${this.addMemberQuery}`);
-                    let users = res.data.users || [];
-                    this.addMemberResults = users.filter(u => !this.currentGroupMembers.find(m => m.id === u.id));
-                } catch (e) {}
-            },
-            async refreshMyProfile() {
-                try {
-                    let res = await axios.get(`/users?q=${this.username}`);
-                    let me = res.data.users?.find(u => u.username === this.username);
-                    if(me) { 
-                        this.myId = me.id; this.myPhoto = me.photo_url || '/default.png'; 
-                        this.usersCache[this.myId] = me; localStorage.setItem('myId', me.id); 
-                    }
-                } catch(e) {}
-            },
-            async openInfoModal() {
-                if (!this.selectedChat) return; this.editingGroupName = this.selectedChat.is_group ? this.selectedChat.title : this.getChatName(this.selectedChat);
-                if (this.selectedChat.is_group) { try { let res = await axios.get(`/conversations/${this.selectedChat.id}/members`); this.currentGroupMembers = res.data.members || []; } catch (e) {} }
-                new bootstrap.Modal(document.getElementById('infoModal')).show();
-            },
-            async addMemberToGroup(user) { try { await axios.put(`/conversations/${this.selectedChat.id}/members/${user.id}`); let res = await axios.get(`/conversations/${this.selectedChat.id}/members`); this.currentGroupMembers = res.data.members || []; } catch (e) {} },
-            toggleMenu(msgId) { this.activeMenuMsgId = (this.activeMenuMsgId === msgId) ? null : msgId; },
-            closeAllMenus() { this.activeMenuMsgId = null; },
-            async reactToMessage(msgId, emoji) {
-                try {
-                    let msg = this.messages.find(m => m.id === msgId); if (!msg) return;
-                    let myExisting = msg.reactions?.find(r => r.user_id === this.myId && r.emoji === emoji);
-                    await axios.put(`/conversations/${this.selectedChat.id}/messages/${msgId}/reaction`, { emoji: myExisting ? "" : emoji });
-                    this.activeMenuMsgId = null; await this.refreshMessages();
-                } catch(e) {}
-            },
-            groupReactions(reactions) {
-                if(!reactions) return {}; let counts = {};
-                reactions.forEach(r => { counts[r.emoji] = (counts[r.emoji] || 0) + 1; }); return counts;
-            },
-            
-            // NUOVO: Ottiene i nomi degli autori per il tooltip
-            getReactionAuthors(reactions, emoji) {
-                if (!reactions) return "";
-                return reactions
-                    .filter(r => r.emoji === emoji)
-                    .map(r => r.username)
-                    .join(', ');
-            },
-
-            startReply(msg) { this.replyingToMsg = msg; this.activeMenuMsgId = null; setTimeout(() => document.querySelector('.msg-input')?.focus(), 100); },
-            cancelReply() { this.replyingToMsg = null; },
-            getSenderNameOfReply(replyId) { let m = this.messages.find(x => x.id === replyId); return m ? this.getUserName(m.senderId) : '...'; },
-            getContentOfReply(replyId) { let m = this.messages.find(x => x.id === replyId); return m ? (m.content || '📷 Foto') : '...'; },
-            scrollToMessage(msgId) {},
-
-            // FIX: Polling unificato
-            startPolling() { 
-                this.pollInterval = setInterval(async () => { 
-                    // 1. Aggiorna sempre la lista chat (notifiche, cambi nome gruppi)
-                    await this.loadConversations();
-
-                    // 2. Aggiorna i messaggi solo se c'è una chat aperta
-                    if (this.selectedChat) {
-                        await this.refreshMessages();
-                    }
-                }, 3000); 
-            },
-
-            stopPolling() { if(this.pollInterval) clearInterval(this.pollInterval); },
-            async doLogin() {
-                if(this.username.length < 3) return;
-                try {
-                    let res = await axios.post("/session", { name: this.username });
-                    this.token = res.data.identifier; localStorage.setItem('token', this.token); localStorage.setItem('username', this.username);
-                    this.setupAxios(); await this.refreshMyProfile(); await this.loadConversations(); this.startPolling();
-                } catch(e) { this.errorMsg = "Errore: " + (e.response?.data || e.message); }
-            },
-            doLogout() { this.token = null; this.stopPolling(); localStorage.clear(); location.reload(); },
-            async sendMessage() {
-                if((!this.newMessage.trim() && !this.selectedFile) || !this.selectedChat) return;
-                try {
-                    let formData = new FormData(); formData.append("content", this.newMessage);
-                    if(this.selectedFile) formData.append("file", this.selectedFile);
-                    if(this.replyingToMsg) formData.append("reply_to", this.replyingToMsg.id);
-                    await axios.post(`/conversations/${this.selectedChat.id}/messages`, formData);
-                    this.newMessage = ''; this.selectedFile = null; this.replyingToMsg = null; this.clearFile(); 
-                    await this.loadMessages();
-                    await this.loadConversations();
-                } catch(e) { alert("Errore invio: " + e.message); }
-            },
-            async deleteMessage(msgId) {
-                if(!confirm("Eliminare?")) return;
-                try { await axios.delete(`/conversations/${this.selectedChat.id}/messages/${msgId}`); this.activeMenuMsgId = null; await this.loadMessages(); await this.loadConversations(); } catch(e) {}
-            },
-            addMemberToSelection(user) { this.newGroupMembers.push(user); this.groupSearchResults = []; this.groupMemberQuery = ''; },
-            removeMemberFromSelection(userId) { this.newGroupMembers = this.newGroupMembers.filter(m => m.id !== userId); },
-            async createGroup() {
-                 if (!this.newGroupName.trim()) return;
-                try {
-                    let memberIDs = this.newGroupMembers.map(u => u.id);
-                    await axios.post("/groups", { name: this.newGroupName, members: memberIDs });
-                    this.newGroupName = ''; this.newGroupMembers = []; await this.loadConversations();
-                } catch (e) { alert("Errore: " + e.message); }
-            },
-            async updateGroupName() { if (!this.selectedChat.is_group) return; try { await axios.put(`/conversations/${this.selectedChat.id}/name`, { name: this.editingGroupName }); this.selectedChat.title = this.editingGroupName; } catch(e) {} },
-            async uploadGroupPhoto() { let file = this.$refs.groupPhotoInput.files[0]; if (!file) return; try { let formData = new FormData(); formData.append("file", file); let res = await axios.put(`/conversations/${this.selectedChat.id}/photo`, formData); this.selectedChat.photo_url = res.data.photo_url; } catch (e) {} },
-            async leaveConversation() { if(!confirm("Sicuro?")) return; try { await axios.delete(`/conversations/${this.selectedChat.id}/members/${this.myId}`); this.selectedChat = null; await this.loadConversations(); } catch (e) {} },
-            triggerFileSelect() { this.$refs.fileInput.click(); },
-            async uploadPhoto() { let file = this.$refs.fileInput.files[0]; if (!file) return; try { let formData = new FormData(); formData.append("file", file); await axios.put(`/users/${this.myId}/photo`, formData); this.myPhoto = `/avatars/${this.myId}.jpg?t=${new Date().getTime()}`; } catch (e) {} },
-            onMessageFileSelected(e) { this.selectedFile = e.target.files[0]; this.previewUrl = URL.createObjectURL(this.selectedFile); },
-            clearFile() { this.selectedFile = null; this.previewUrl = null; if(this.$refs.msgFileInput) this.$refs.msgFileInput.value = null; },
-            
-            async fetchUserInfo(userId, force = false) { 
-                // Se abbiamo i dati e NON stiamo forzando, usiamo la cache
-                if (this.usersCache[userId] && !force) return; 
-                
-                try { 
-                    let response = await axios.get(`/users/${userId}`); 
-                    let user = response.data; 
-                    let baseUrl = user.photo_url ? user.photo_url : `/avatars/${userId}.jpg`;
-
-                    // FIX: Cache Busting per foto aggiornate in tempo reale
-                    if (force) {
-                        user.photo_url = `${baseUrl}?t=${new Date().getTime()}`;
-                    } else {
-                        user.photo_url = baseUrl;
-                    }
-
-                    this.usersCache[userId] = user; 
-                } catch (e) { 
-                    // Fallback
-                    this.usersCache[userId] = { id: userId, username: 'Utente', photo_url: `/avatars/${userId}.jpg` }; 
-                } 
-            },
-            getChatName(chat) { if (chat.is_group) return chat.title || 'Gruppo'; if (chat.other_user_id) return this.usersCache[chat.other_user_id]?.username || 'Utente'; return 'Chat'; },
-            getChatAvatar(chat) { if (chat.is_group && chat.photo_url) return chat.photo_url; if (chat.is_group) return '/default.png'; if (chat.other_user_id) return this.getUserAvatar(chat.other_user_id); return '/default.png'; },
-            getUserAvatar(userId) { if (userId === this.myId) return this.myPhoto; let u = this.usersCache[userId]; return (u && u.photo_url) ? u.photo_url : `/avatars/${userId}.jpg`; },
-            getUserName(userId) { return (userId === this.myId) ? 'Tu' : (this.usersCache[userId]?.username || '...'); },
-            formatTime(iso) { if (!iso) return ''; let d = new Date(iso); return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); },
-            scrollToBottom() { this.$nextTick(() => { const el = this.$refs.msgBox; if (el) el.scrollTop = el.scrollHeight; }); }
+      data() {
+        return {
+          token: localStorage.getItem('token') || null, myId: localStorage.getItem('myId') || null, username: localStorage.getItem('username') || '',
+          myPhoto: localStorage.getItem('myPhoto') || '/default.png', errorMsg: '', loading: false, conversations: [], selectedChat: null,
+          messages: [], newMessage: '', searchQuery: '', selectedFile: null, previewUrl: null, newGroupName: '', groupMemberQuery: '',
+          groupSearchResults: [], newGroupMembers: [], currentGroupMembers: [], addMemberQuery: '', addMemberResults: [], editingGroupName: '',
+          usersCache: {}, pollInterval: null, activeMenuMsgId: null, replyingToMsg: null, isEditingName: false, tempUsername: '',
+          forwardSearch: '', msgToForward: null
         }
+      },
+      computed: { 
+        mediaMessages() { return this.messages ? this.messages.filter(m => m.photo_url && m.photo_url !== '') : []; },
+        filteredForwardList() {
+          if (!this.conversations) return [];
+          return this.conversations.filter(c => {
+            let name = this.getChatName(c).toLowerCase();
+            return name.includes(this.forwardSearch.toLowerCase());
+          });
+        }
+      },
+      async mounted() { if (this.token) { this.setupAxios(); await this.refreshMyProfile(); await this.loadConversations(); this.startPolling(); } },
+      beforeUnmount() { this.stopPolling(); },
+      methods: {
+        setupAxios() { axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`; },
+        getFullUrl(path) { return (!path || path === '/default.png' || path === 'null') ? '/default.png' : `${BACKEND_URL}${path}`; },
+        handleImgError(e) { if(e.target.src.includes("default.png")) return; e.target.src = "/default.png"; },
+        startEditName() { this.tempUsername = this.username; this.isEditingName = true; },
+        async saveUsername() {
+          if (!this.tempUsername || this.tempUsername.length < 3) { alert("Nome troppo corto!"); return; }
+          try {
+            await axios.put(`/users/${this.myId}/username`, { username: this.tempUsername });
+            this.username = this.tempUsername;
+            localStorage.setItem('username', this.username);
+            this.isEditingName = false;
+          } catch (e) { alert("Errore: " + e.message); }
+        },
+        async loadConversations() {
+          try {
+            let res = await axios.get("/conversations");
+            this.conversations = res.data.conversations || [];
+            if (this.selectedChat) {
+              let updated = this.conversations.find(c => c.id === this.selectedChat.id);
+              if (updated) { updated.unread_count = 0; this.selectedChat = updated; }
+            }
+          } catch(e) {}
+        },
+        async selectChat(chat) { this.selectedChat = chat; chat.unread_count = 0; this.messages = []; await this.loadMessages(); },
+        async loadMessages() {
+          if(!this.selectedChat) return;
+          try {
+            await axios.put(`/conversations/${this.selectedChat.id}/read`);
+            let res = await axios.get(`/conversations/${this.selectedChat.id}/messages`);
+            this.messages = res.data.messages || [];
+            this.scrollToBottom();
+          } catch(e) {}
+        },
+        async refreshMessages() { if(this.selectedChat) await this.loadMessages(); },
+        async doLogin() {
+          try {
+            let res = await axios.post("/session", { name: this.username });
+            this.token = res.data.identifier; localStorage.setItem('token', this.token);
+            this.setupAxios(); await this.refreshMyProfile(); await this.loadConversations(); this.startPolling();
+          } catch(e) { this.errorMsg = e.message; }
+        },
+        doLogout() { localStorage.clear(); location.reload(); },
+        async sendMessage() {
+          let formData = new FormData(); formData.append("content", this.newMessage);
+          if(this.selectedFile) formData.append("file", this.selectedFile);
+          try {
+            await axios.post(`/conversations/${this.selectedChat.id}/messages`, formData);
+            this.newMessage = ''; this.selectedFile = null; await this.loadMessages();
+          } catch(e) {}
+        },
+        groupReactions(reactions) {
+          let counts = {};
+          reactions.forEach(r => { counts[r.emoji] = (counts[r.emoji] || 0) + 1; });
+          return counts;
+        },
+        getReactionAuthors(reactions, emoji) {
+          return reactions.filter(r => r.emoji === emoji).map(r => r.username).join(', ');
+        },
+        startPolling() { this.pollInterval = setInterval(async () => { await this.loadConversations(); await this.refreshMessages(); }, 3000); },
+        stopPolling() { clearInterval(this.pollInterval); },
+        getChatName(chat) { return chat.is_group ? chat.title : (this.usersCache[chat.other_user_id]?.username || 'Utente'); },
+        getChatAvatar(chat) { return chat.photo_url || '/default.png'; },
+        getUserAvatar(uid) { return this.usersCache[uid]?.photo_url || '/default.png'; },
+        getUserName(uid) { return this.usersCache[uid]?.username || '...'; },
+        formatTime(iso) { return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); },
+        scrollToBottom() { this.$nextTick(() => { let b = this.$refs.msgBox; if(b) b.scrollTop = b.scrollHeight; }); }
+      }
     }).mount('#app');
-</script>
+  </script>
 </body>
 </html>
