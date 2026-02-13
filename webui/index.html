@@ -33,7 +33,24 @@
         .preview-thumb { height: 50px; width: 50px; object-fit: cover; border-radius: 5px; margin-right: 10px; border: 1px solid #fff; }
         .msg-row { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 20px; }
         .msg-row.mine { flex-direction: row-reverse; }
-        .msg { max-width: 65%; padding: 6px 9px; border-radius: 7.5px; font-size: 0.9rem; line-height: 19px; position: relative; word-wrap: break-word; box-shadow: 0 1px 0.5px rgba(0,0,0,0.13); }
+        
+        /* FIX: Gestione testo lungo */
+        .msg { 
+            max-width: 65%; 
+            padding: 6px 9px; 
+            border-radius: 7.5px; 
+            font-size: 0.9rem; 
+            line-height: 19px; 
+            position: relative; 
+            box-shadow: 0 1px 0.5px rgba(0,0,0,0.13); 
+            
+            /* Regole per mandare a capo */
+            word-wrap: break-word; 
+            overflow-wrap: break-word; 
+            word-break: break-word; 
+            white-space: pre-wrap; 
+        }
+
         .msg-in { background-color: #fff; border-top-left-radius: 0; }
         .msg-out { background-color: #d9fdd3; border-top-right-radius: 0; }
         .msg-image { display: block; max-width: 100%; max-height: 300px; object-fit: contain; border-radius: 5px; margin-bottom: 5px; cursor: pointer; background-color: #f0f0f0; min-height: 50px; }
@@ -45,7 +62,28 @@
         .msg-in .msg-dropdown-trigger { background: linear-gradient(to right, transparent, #fff 40%); }
         .msg-out .msg-dropdown-trigger { background: linear-gradient(to right, transparent, #d9fdd3 40%); }
         .msg:hover .msg-dropdown-trigger { display: block; }
-        .msg-dropdown-menu { position: absolute; top: 25px; right: 5px; background: white; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; min-width: 160px; padding: 5px 0; display: flex; flex-direction: column; }
+        
+        /* FIX: Dropdown Menu */
+        .msg-dropdown-menu { 
+            position: absolute; 
+            top: 25px; 
+            right: 5px; 
+            background: white; 
+            border-radius: 6px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+            z-index: 1000; 
+            min-width: 160px; 
+            padding: 5px 0; 
+            display: flex; 
+            flex-direction: column; 
+        }
+        
+        /* FIX: Allinea a sinistra per messaggi ricevuti */
+        .msg-in .msg-dropdown-menu {
+            right: auto; 
+            left: 5px;
+        }
+
         .menu-item { padding: 10px 15px; cursor: pointer; font-size: 0.95rem; color: #3b4a54; }
         .menu-item:hover { background: #f5f6f6; }
         .menu-item.danger { color: #dc3545; }
@@ -54,14 +92,59 @@
         .reaction-option:hover { transform: scale(1.2); }
         .msg-reactions-display { position: absolute; bottom: -24px; right: 0; background: white; border-radius: 16px; padding: 3px 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); font-size: 0.9rem; display: flex; gap: 5px; border: 1px solid #e9edef; z-index: 5; cursor: pointer; align-items: center; }
         .msg-in .msg-reactions-display { right: auto; left: 0; }
+        
+        /* NUOVO: Stile per tooltip reazioni */
+        /* Stile per il contenitore della reazione */
+        .reaction-item {
+            cursor: help;
+            margin-right: 4px;
+            padding: 1px 4px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            position: relative; /* Necessario per posizionare il tooltip */
+        }
+
+        .reaction-item:hover {
+            background-color: #f0f2f5;
+        }
+
+        /* Stile per il Tooltip Personalizzato (Istantaneo) */
+        .reaction-item .tooltip-text {
+            visibility: hidden;
+            width: auto;
+            min-width: 80px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px 8px;
+            position: absolute;
+            z-index: 2000;
+            bottom: 125%; /* Lo posiziona sopra l'emoji */
+            left: 50%;
+            transform: translateX(-50%); /* Centra perfettamente */
+            font-size: 0.75rem;
+            white-space: nowrap; /* Evita che il nome vada a capo */
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none; /* Evita che il mouse ci finisca sopra */
+        }
+
+        /* Quando passi il mouse, appare subito */
+        .reaction-item:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+        .reaction-item:hover {
+            background-color: #f0f2f5;
+        }
+
         .reply-preview-bar { position: absolute; bottom: 100%; left: 0; width: 100%; background: #f0f2f5; padding: 10px; border-left: 5px solid #00a884; display: flex; flex-direction: column; z-index: 20; border-top: 1px solid #ccc; }
         .quoted-msg-block { background: rgba(0,0,0,0.05); border-left: 4px solid #00a884; border-radius: 4px; padding: 5px; margin-bottom: 5px; font-size: 0.85rem; display: flex; flex-direction: column; cursor: pointer; }
         .quoted-sender { font-weight: bold; color: #00a884; font-size: 0.75rem; }
         .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; max-height: 250px; overflow-y: auto; }
         .gallery-item { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 4px; cursor: pointer; border: 1px solid #eee; }
         .empty-gallery { text-align: center; padding: 20px; color: #8696a0; font-size: 0.9rem; background: #f9f9f9; border-radius: 8px; }
-        
-        /* NUOVO: Badge per messaggi non letti */
         .unread-badge { background-color: #00a884; color: white; border-radius: 50%; min-width: 20px; height: 20px; font-size: 0.75rem; display: flex; align-items: center; justify-content: center; font-weight: bold; padding: 0 5px; }
     </style>
 </head>
@@ -158,14 +241,25 @@
                             <span class="msg-time">{{ formatTime(msg.timestamp) }} 
                                 <span v-if="msg.senderId === myId" class="msg-status">
                                     <i v-if="msg.status === 2" class="bi bi-check2-all status-read" title="Letto"></i>
-                                    
                                     <i v-else-if="msg.status === 1" class="bi bi-check2-all" title="Ricevuto" style="color: grey"></i>
-                                    
                                     <i v-else class="bi bi-check2 status-sent" title="Inviato"></i>
                                 </span>
                             </span>
+                            
                             <div v-if="msg.reactions && msg.reactions.length > 0" class="msg-reactions-display">
-                                <span v-for="(count, emoji) in groupReactions(msg.reactions)" :key="emoji">{{ emoji }} <span v-if="count > 1" style="font-weight: bold; font-size: 0.8rem; color: #666;">{{ count }}</span></span>
+                                <span v-for="(count, emoji) in groupReactions(msg.reactions)" 
+                                      :key="emoji" 
+                                      class="reaction-item">
+                                    
+                                    {{ emoji }} 
+                                    <span v-if="count > 1" style="font-weight: bold; font-size: 0.8rem; color: #666;">
+                                        {{ count }}
+                                    </span>
+                            
+                                    <span class="tooltip-text">
+                                        {{ getReactionAuthors(msg.reactions, emoji) }}
+                                    </span>
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -218,7 +312,9 @@
 <script type="module">
     import { createApp, reactive } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js';
     import axios from 'https://unpkg.com/axios/dist/esm/axios.js';
-    const BACKEND_URL = 'http://localhost:3000';
+    
+    // FIX: URL Dinamico per supportare l'accesso da altri dispositivi
+    const BACKEND_URL = 'http://' + window.location.hostname + ':3000';
     axios.defaults.baseURL = BACKEND_URL;
 
     createApp({
@@ -284,13 +380,35 @@
             async loadConversations() {
                 try {
                     let res = await axios.get("/conversations");
-                    this.conversations = res.data.conversations || [];
-                    for(let c of this.conversations) if(!c.is_group && c.other_user_id) await this.fetchUserInfo(c.other_user_id);
+                    let newConversations = res.data.conversations || [];
+
+                    // FIX: Sincronizzazione perfetta della chat aperta
+                    if (this.selectedChat) {
+                        // Cerchiamo la versione aggiornata della chat corrente nella nuova lista
+                        let updatedChat = newConversations.find(c => c.id === this.selectedChat.id);
+
+                        if (updatedChat) {
+                            // TRUCCO: Sostituiamo l'intero oggetto selectedChat
+                            // Questo risolve i problemi di nomi gruppo/foto che non si aggiornano
+                            updatedChat.unread_count = 0; // Forziamo letto perché la stiamo guardando
+                            this.selectedChat = updatedChat;
+                        }
+                    }
+
+                    this.conversations = newConversations;
+
+                    // FIX: Aggiornamento forzato profili utenti per le chat 1-to-1
+                    // Assicura che nuove foto e nomi si vedano subito
+                    for(let c of this.conversations) {
+                        if(!c.is_group && c.other_user_id) {
+                            await this.fetchUserInfo(c.other_user_id, true); 
+                        }
+                    }
                 } catch(e) {}
             },
             async selectChat(chat) { 
                 this.selectedChat = chat; 
-                chat.unread_count = 0; // AZZERA LOCALMENTE PER FEEDBACK IMMEDIATO
+                chat.unread_count = 0; 
                 this.messages = []; 
                 this.replyingToMsg = null; 
                 await this.loadMessages(); 
@@ -314,7 +432,8 @@
                     let newMsgs = res.data.messages || [];
                     if(JSON.stringify(newMsgs) !== JSON.stringify(this.messages)) {
                         this.messages = newMsgs;
-                        await this.loadConversations();
+                        // Non chiamiamo loadConversations qui per evitare loop, 
+                        // lo gestiamo nel polling principale
                     }
                 } catch(e) {}
             },
@@ -378,12 +497,35 @@
                 if(!reactions) return {}; let counts = {};
                 reactions.forEach(r => { counts[r.emoji] = (counts[r.emoji] || 0) + 1; }); return counts;
             },
+            
+            // NUOVO: Ottiene i nomi degli autori per il tooltip
+            getReactionAuthors(reactions, emoji) {
+                if (!reactions) return "";
+                return reactions
+                    .filter(r => r.emoji === emoji)
+                    .map(r => r.username)
+                    .join(', ');
+            },
+
             startReply(msg) { this.replyingToMsg = msg; this.activeMenuMsgId = null; setTimeout(() => document.querySelector('.msg-input')?.focus(), 100); },
             cancelReply() { this.replyingToMsg = null; },
             getSenderNameOfReply(replyId) { let m = this.messages.find(x => x.id === replyId); return m ? this.getUserName(m.senderId) : '...'; },
             getContentOfReply(replyId) { let m = this.messages.find(x => x.id === replyId); return m ? (m.content || '📷 Foto') : '...'; },
             scrollToMessage(msgId) {},
-            startPolling() { this.pollInterval = setInterval(async () => { if (this.selectedChat) await this.refreshMessages(); else await this.loadConversations(); }, 3000); },
+
+            // FIX: Polling unificato
+            startPolling() { 
+                this.pollInterval = setInterval(async () => { 
+                    // 1. Aggiorna sempre la lista chat (notifiche, cambi nome gruppi)
+                    await this.loadConversations();
+
+                    // 2. Aggiorna i messaggi solo se c'è una chat aperta
+                    if (this.selectedChat) {
+                        await this.refreshMessages();
+                    }
+                }, 3000); 
+            },
+
             stopPolling() { if(this.pollInterval) clearInterval(this.pollInterval); },
             async doLogin() {
                 if(this.username.length < 3) return;
@@ -427,7 +569,29 @@
             async uploadPhoto() { let file = this.$refs.fileInput.files[0]; if (!file) return; try { let formData = new FormData(); formData.append("file", file); await axios.put(`/users/${this.myId}/photo`, formData); this.myPhoto = `/avatars/${this.myId}.jpg?t=${new Date().getTime()}`; } catch (e) {} },
             onMessageFileSelected(e) { this.selectedFile = e.target.files[0]; this.previewUrl = URL.createObjectURL(this.selectedFile); },
             clearFile() { this.selectedFile = null; this.previewUrl = null; if(this.$refs.msgFileInput) this.$refs.msgFileInput.value = null; },
-            async fetchUserInfo(userId) { if (this.usersCache[userId]) return; try { let response = await axios.get(`/users/${userId}`); let user = response.data; if (!user.photo_url) user.photo_url = `/avatars/${userId}.jpg`; this.usersCache[userId] = user; } catch (e) { this.usersCache[userId] = { id: userId, username: 'Utente', photo_url: null }; } },
+            
+            async fetchUserInfo(userId, force = false) { 
+                // Se abbiamo i dati e NON stiamo forzando, usiamo la cache
+                if (this.usersCache[userId] && !force) return; 
+                
+                try { 
+                    let response = await axios.get(`/users/${userId}`); 
+                    let user = response.data; 
+                    let baseUrl = user.photo_url ? user.photo_url : `/avatars/${userId}.jpg`;
+
+                    // FIX: Cache Busting per foto aggiornate in tempo reale
+                    if (force) {
+                        user.photo_url = `${baseUrl}?t=${new Date().getTime()}`;
+                    } else {
+                        user.photo_url = baseUrl;
+                    }
+
+                    this.usersCache[userId] = user; 
+                } catch (e) { 
+                    // Fallback
+                    this.usersCache[userId] = { id: userId, username: 'Utente', photo_url: `/avatars/${userId}.jpg` }; 
+                } 
+            },
             getChatName(chat) { if (chat.is_group) return chat.title || 'Gruppo'; if (chat.other_user_id) return this.usersCache[chat.other_user_id]?.username || 'Utente'; return 'Chat'; },
             getChatAvatar(chat) { if (chat.is_group && chat.photo_url) return chat.photo_url; if (chat.is_group) return '/default.png'; if (chat.other_user_id) return this.getUserAvatar(chat.other_user_id); return '/default.png'; },
             getUserAvatar(userId) { if (userId === this.myId) return this.myPhoto; let u = this.usersCache[userId]; return (u && u.photo_url) ? u.photo_url : `/avatars/${userId}.jpg`; },
