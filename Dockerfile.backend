@@ -7,4 +7,10 @@ FROM debian:bookworm
 EXPOSE 3000
 WORKDIR /app/
 COPY --from=builder /app/webapi ./
+
+# Cambia il proprietario della cartella /app all'utente con ID 1000.
+# Questo permette all'utente 1000 di creare il file .db al suo interno.
+RUN chown -R 1000:1000 /app
+# -----------------------------
+
 CMD ["/app/webapi"]
