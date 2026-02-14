@@ -17,6 +17,7 @@ type conversationSummaryResponse struct {
 	LastMessageAt       string `json:"last_message_at"`
 	LastMessagePreview  string `json:"last_message_preview"`
 	LastMessageSenderID string `json:"last_message_sender_id"`
+	LastMessageStatus   int    `json:"last_message_status"` // <--- NUOVO
 	UnreadCount         int    `json:"unread_count"`
 }
 
@@ -36,9 +37,10 @@ func (rt *_router) getMyConversations(w http.ResponseWriter, r *http.Request, _ 
 			Title:               c.Title,
 			PhotoURL:            c.PhotoURL,
 			OtherUserID:         c.OtherUserID,
-			LastMessageAt:       c.LastMessageAt,      // Mappato dal DB
-			LastMessagePreview:  c.LastMessagePreview, // Mappato dal DB
+			LastMessageAt:       c.LastMessageAt,
+			LastMessagePreview:  c.LastMessagePreview,
 			LastMessageSenderID: c.LastMessageSenderID,
+			LastMessageStatus:   c.LastMessageStatus, // MAPPARE QUESTO
 			UnreadCount:         c.UnreadCount,
 		})
 	}

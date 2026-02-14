@@ -48,7 +48,7 @@ func New(cfg Config) (Router, error) {
 
 	// --- FIX PER IL FRONTEND ---
 	// Se la rotta non è un'API, serve i file statici dalla cartella webui
-	router.NotFound = http.FileServer(http.Dir("webui"))
+	router.NotFound = http.FileServer(http.Dir("webui/dist"))
 
 	return &_router{
 		router:     router,

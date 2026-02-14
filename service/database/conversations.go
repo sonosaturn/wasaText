@@ -9,27 +9,30 @@ import (
 func (db *appdbimpl) GetMyConversations(userID string) ([]Conversation, error) {
 	var conversations []Conversation
 
-	// Questa query recupera le conversazioni unendo le tabelle.
-	// Se è una chat privata (is_group = 0), recupera nome e foto dell'altro utente.
-	// Se è un gruppo, usa titolo e foto del gruppo.
-	// Calcola i messaggi non letti confrontando il timestamp dei messaggi con l'ultimo accesso dell'utente (last_read_at).
-
 	query := `
 	SELECT 
 		c.id,
 		c.is_group,
-		-- Titolo: Se gruppo usa c.title, se privato usa u.username (dell'altro utente)
 		COALESCE(CASE WHEN c.is_group = 1 THEN c.title ELSE u.username END, 'Sconosciuto') as title,
-		-- Foto: Se gruppo usa c.photo_url, se privato usa u.photo_url
 		COALESCE(CASE WHEN c.is_group = 1 THEN c.photo_url ELSE u.photo_url END, '') as photo_url,
-		-- Anteprima ultimo messaggio (subquery per semplicità, ottimizzabile)
 		COALESCE((SELECT content FROM messages m WHERE m.conversation_id = c.id ORDER BY m.timestamp DESC LIMIT 1), '') as last_msg,
 		COALESCE((SELECT timestamp FROM messages m WHERE m.conversation_id = c.id ORDER BY m.timestamp DESC LIMIT 1), '') as last_time,
-		-- ID dell'ultimo mittente (per mostrare "Tu:")
 		COALESCE((SELECT sender_id FROM messages m WHERE m.conversation_id = c.id ORDER BY m.timestamp DESC LIMIT 1), '') as last_sender,
-		-- ID dell'altro utente (per chat private)
+		
+		-- Recuperiamo lo STATO dell'ultimo messaggio
+		COALESCE((SELECT 
+			CASE 
+				WHEN m2.sender_id = ? THEN 
+					CASE 
+						WHEN (SELECT COUNT(*) FROM conversation_members cm WHERE cm.conversation_id = m2.conversation_id AND cm.last_read_at >= m2.timestamp AND cm.user_id != m2.sender_id) = (SELECT COUNT(*) FROM conversation_members cm WHERE cm.conversation_id = m2.conversation_id AND cm.user_id != m2.sender_id)
+						THEN 2 
+						ELSE 0 
+					END
+				ELSE 1 
+			END
+		FROM messages m2 WHERE m2.conversation_id = c.id ORDER BY m2.timestamp DESC LIMIT 1), 0) as last_status,
+
 		COALESCE(u.id, '') as other_user_id,
-		-- Conteggio non letti: messaggi successivi al mio last_read_at
 		(SELECT COUNT(*) 
 		 FROM messages m 
 		 WHERE m.conversation_id = c.id 
@@ -39,7 +42,6 @@ func (db *appdbimpl) GetMyConversations(userID string) ([]Conversation, error) {
 	FROM conversation_members my_cm
 	JOIN conversations c ON my_cm.conversation_id = c.id
 	
-	-- Join per trovare l'altro utente nelle chat private
 	LEFT JOIN conversation_members other_cm ON c.id = other_cm.conversation_id AND other_cm.user_id != my_cm.user_id AND c.is_group = 0
 	LEFT JOIN users u ON other_cm.user_id = u.id
 
@@ -47,7 +49,7 @@ func (db *appdbimpl) GetMyConversations(userID string) ([]Conversation, error) {
 	ORDER BY last_time DESC
 	`
 
-	rows, err := db.c.Query(query, userID)
+	rows, err := db.c.Query(query, userID, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -56,6 +58,7 @@ func (db *appdbimpl) GetMyConversations(userID string) ([]Conversation, error) {
 	for rows.Next() {
 		var c Conversation
 		var lastMsg, lastTime, lastSender, otherUserID string
+		var lastStatus int
 
 		err = rows.Scan(
 			&c.ID,
@@ -65,6 +68,7 @@ func (db *appdbimpl) GetMyConversations(userID string) ([]Conversation, error) {
 			&lastMsg,
 			&lastTime,
 			&lastSender,
+			&lastStatus,
 			&otherUserID,
 			&c.UnreadCount,
 		)
@@ -74,10 +78,11 @@ func (db *appdbimpl) GetMyConversations(userID string) ([]Conversation, error) {
 
 		c.LastMessagePreview = lastMsg
 		if c.LastMessagePreview == "" && lastTime != "" {
-			c.LastMessagePreview = "[Foto]" // Se c'è timestamp ma non testo, è una foto
+			c.LastMessagePreview = "[Foto]"
 		}
 		c.LastMessageAt = lastTime
 		c.LastMessageSenderID = lastSender
+		c.LastMessageStatus = lastStatus
 		c.OtherUserID = otherUserID
 
 		conversations = append(conversations, c)
@@ -90,26 +95,21 @@ func (db *appdbimpl) GetMyConversations(userID string) ([]Conversation, error) {
 	return conversations, nil
 }
 
-// CreateGroup crea una nuova conversazione di gruppo
 func (db *appdbimpl) CreateGroup(name string, memberIDs []string) (string, error) {
-	// 1. Genera UUID
 	groupID, err := uuid.NewV4()
 	if err != nil {
 		return "", err
 	}
 	idStr := groupID.String()
 
-	// 2. Crea Conversazione
 	_, err = db.c.Exec("INSERT INTO conversations (id, title, is_group, last_message_at) VALUES (?, ?, 1, DATETIME('now'))", idStr, name)
 	if err != nil {
 		return "", err
 	}
 
-	// 3. Aggiungi Membri
 	queryMember := "INSERT INTO conversation_members (conversation_id, user_id, last_read_at) VALUES (?, ?, DATETIME('now'))"
 	for _, memberID := range memberIDs {
 		if _, err := db.c.Exec(queryMember, idStr, memberID); err != nil {
-			// Continua anche se uno fallisce, o gestisci rollback (qui semplificato)
 			continue
 		}
 	}
@@ -117,9 +117,7 @@ func (db *appdbimpl) CreateGroup(name string, memberIDs []string) (string, error
 	return idStr, nil
 }
 
-// CreateDirectConversation crea o recupera una chat 1-a-1
 func (db *appdbimpl) CreateDirectConversation(myUserID string, otherUserID string) (string, error) {
-	// 1. Controlla se esiste già
 	var existingID string
 	err := db.c.QueryRow(`
 		SELECT c.id 
@@ -136,20 +134,17 @@ func (db *appdbimpl) CreateDirectConversation(myUserID string, otherUserID strin
 		return existingID, nil
 	}
 
-	// 2. Se non esiste, crea nuova
 	convID, err := uuid.NewV4()
 	if err != nil {
 		return "", err
 	}
 	idStr := convID.String()
 
-	// Inserisci conversazione (senza titolo/foto, sono dinamici per le chat dirette)
 	_, err = db.c.Exec("INSERT INTO conversations (id, is_group, last_message_at) VALUES (?, 0, DATETIME('now'))", idStr)
 	if err != nil {
 		return "", err
 	}
 
-	// Inserisci i due membri
 	_, err = db.c.Exec("INSERT INTO conversation_members (conversation_id, user_id, last_read_at) VALUES (?, ?, DATETIME('now'))", idStr, myUserID)
 	if err != nil {
 		return "", err
@@ -162,7 +157,6 @@ func (db *appdbimpl) CreateDirectConversation(myUserID string, otherUserID strin
 	return idStr, nil
 }
 
-// GetConversationMembers recupera la lista degli utenti in una chat
 func (db *appdbimpl) GetConversationMembers(conversationID string) ([]User, error) {
 	query := `
 		SELECT u.id, u.username, COALESCE(u.photo_url, '') 
@@ -188,21 +182,17 @@ func (db *appdbimpl) GetConversationMembers(conversationID string) ([]User, erro
 	return users, rows.Err()
 }
 
-// SetConversationName cambia il titolo (solo per gruppi)
 func (db *appdbimpl) SetConversationName(conversationID string, newName string) error {
 	_, err := db.c.Exec("UPDATE conversations SET title = ? WHERE id = ? AND is_group = 1", newName, conversationID)
 	return err
 }
 
-// SetConversationPhoto cambia la foto (solo per gruppi)
 func (db *appdbimpl) SetConversationPhoto(conversationID string, photoURL string) error {
 	_, err := db.c.Exec("UPDATE conversations SET photo_url = ? WHERE id = ? AND is_group = 1", photoURL, conversationID)
 	return err
 }
 
-// AddToConversation aggiunge un utente a un gruppo
 func (db *appdbimpl) AddToConversation(conversationID string, userID string) error {
-	// Verifica che sia un gruppo
 	var isGroup bool
 	err := db.c.QueryRow("SELECT is_group FROM conversations WHERE id = ?", conversationID).Scan(&isGroup)
 	if err != nil {
@@ -216,21 +206,32 @@ func (db *appdbimpl) AddToConversation(conversationID string, userID string) err
 	return err
 }
 
-// RemoveFromConversation rimuove un utente
+// FIX: Modificato per cancellare l'intera chat se è diretta (1-to-1)
 func (db *appdbimpl) RemoveFromConversation(conversationID string, userID string) error {
-	_, err := db.c.Exec("DELETE FROM conversation_members WHERE conversation_id = ? AND user_id = ?", conversationID, userID)
-	return err
+	// 1. Controlla se è un gruppo
+	var isGroup bool
+	err := db.c.QueryRow("SELECT is_group FROM conversations WHERE id = ?", conversationID).Scan(&isGroup)
+	if err != nil {
+		return err
+	}
+
+	if !isGroup {
+		// SE È CHAT DIRETTA: Elimina l'intera conversazione.
+		// Grazie al CASCADE, verranno eliminati anche i messaggi e l'altro membro.
+		_, err := db.c.Exec("DELETE FROM conversations WHERE id = ?", conversationID)
+		return err
+	} else {
+		// SE È UN GRUPPO: Rimuovi solo il membro (comportamento standard)
+		_, err := db.c.Exec("DELETE FROM conversation_members WHERE conversation_id = ? AND user_id = ?", conversationID, userID)
+		return err
+	}
 }
 
-// LeaveConversation è alias di Remove
 func (db *appdbimpl) LeaveConversation(conversationID string, userID string) error {
 	return db.RemoveFromConversation(conversationID, userID)
 }
 
-// MarkConversationAsRead aggiorna il timestamp di lettura dell'utente
 func (db *appdbimpl) MarkConversationAsRead(conversationID string, userID string) error {
-	// Usiamo CURRENT_TIMESTAMP per coerenza con il resto del database.
-	// Rimuoviamo last_seen_at che causava l'errore di sintassi.
 	_, err := db.c.Exec(`
         UPDATE conversation_members 
         SET last_read_at = CURRENT_TIMESTAMP
