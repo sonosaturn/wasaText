@@ -20,7 +20,7 @@ func (rt *_router) forwardMessage(w http.ResponseWriter, r *http.Request, ps htt
 	}
 
 	var body struct {
-		SourceMessageID string `json:"message_id"`
+		SourceMessageID string `json:"messageId"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)

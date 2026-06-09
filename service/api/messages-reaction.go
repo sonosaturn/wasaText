@@ -39,5 +39,6 @@ func (rt *_router) reactToMessage(w http.ResponseWriter, r *http.Request, ps htt
 		}
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	w.Header().Set("Content-Type", "text/plain")
+	_, _ = w.Write([]byte("OK"))
 }

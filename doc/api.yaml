@@ -279,21 +279,12 @@ paths:
                 description: Error detail
 
   # --- GROUP MANAGEMENT ---
-  /conversations/{conversationId}/members/{userId}:
+  /conversations/{conversationId}/members:
     parameters:
       - name: conversationId
         in: path
         required: true
         description: ID of the conversation
-        schema:
-          type: string
-          pattern: "^[a-zA-Z0-9-]+$"
-          minLength: 1
-          maxLength: 64
-      - name: userId
-        in: path
-        required: true
-        description: ID of the user to add/remove
         schema:
           type: string
           pattern: "^[a-zA-Z0-9-]+$"
@@ -336,6 +327,27 @@ paths:
               schema:
                 type: string
                 description: Error detail
+
+  /conversations/{conversationId}/members/{userId}:
+    parameters:
+      - name: conversationId
+        in: path
+        required: true
+        description: ID of the conversation
+        schema:
+          type: string
+          pattern: "^[a-zA-Z0-9-]+$"
+          minLength: 1
+          maxLength: 64
+      - name: userId
+        in: path
+        required: true
+        description: ID of the user to add/remove
+        schema:
+          type: string
+          pattern: "^[a-zA-Z0-9-]+$"
+          minLength: 1
+          maxLength: 64
     put:
       tags: [conversations]
       summary: Add user to group
@@ -419,7 +431,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserList"
+                $ref: "#/components/schemas/UserCollection"
               example:
                 users:
                   - id: "user1"
@@ -500,6 +512,505 @@ paths:
               schema:
                 type: string
                 description: Error detail
+
+  # --- DELETE MESSAGE ---
+  /conversations/{conversationId}/messages/{messageId}:
+    parameters:
+      - name: conversationId
+        in: path
+        required: true
+        description: ID of the conversation
+        schema:
+          type: string
+          pattern: "^[a-zA-Z0-9-]+$"
+          minLength: 1
+          maxLength: 64
+      - name: messageId
+        in: path
+        required: true
+        description: ID of the message
+        schema:
+          type: string
+          pattern: "^[a-zA-Z0-9-]+$"
+          minLength: 1
+          maxLength: 64
+    delete:
+      tags: [messages]
+      summary: Delete a message
+      description: Deletes a message from a conversation (sender only)
+      operationId: deleteMessage
+      security:
+        - BearerAuth: []
+      responses:
+        "204":
+          description: Message deleted successfully
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # --- REACTIONS ---
+  /conversations/{conversationId}/messages/{messageId}/reaction:
+    parameters:
+      - name: conversationId
+        in: path
+        required: true
+        description: ID of the conversation
+        schema:
+          type: string
+          pattern: "^[a-zA-Z0-9-]+$"
+          minLength: 1
+          maxLength: 64
+      - name: messageId
+        in: path
+        required: true
+        description: ID of the message
+        schema:
+          type: string
+          pattern: "^[a-zA-Z0-9-]+$"
+          minLength: 1
+          maxLength: 64
+    put:
+      tags: [messages]
+      summary: React to a message
+      description: Adds, updates, or removes an emoji reaction (empty emoji removes it)
+      operationId: reactToMessage
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Reaction payload
+              properties:
+                emoji:
+                  type: string
+                  description: Emoji to react with; empty string removes the reaction
+                  minLength: 0
+                  maxLength: 8
+                  pattern: "^.{0,8}$"
+                  example: "👍"
+      responses:
+        "200":
+          description: Reaction updated successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Confirmation message
+                example: "OK"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # --- FORWARD MESSAGE ---
+  /conversations/{conversationId}/forward:
+    parameters:
+      - name: conversationId
+        in: path
+        required: true
+        description: ID of the destination conversation
+        schema:
+          type: string
+          pattern: "^[a-zA-Z0-9-]+$"
+          minLength: 1
+          maxLength: 64
+    post:
+      tags: [messages]
+      summary: Forward a message
+      description: Forwards an existing message to another conversation
+      operationId: forwardMessage
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Forward message payload
+              properties:
+                messageId:
+                  type: string
+                  description: ID of the source message to forward
+                  minLength: 1
+                  maxLength: 64
+                  pattern: "^[a-zA-Z0-9-]+$"
+              required: [messageId]
+      responses:
+        "201":
+          description: Message forwarded successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+              example:
+                id: "msg456"
+                conversationId: "conv123"
+                senderId: "user1"
+                content: "Hello world"
+                timestamp: "2023-10-27T10:05:00Z"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Source message not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # --- CREATE GROUP ---
+  /groups:
+    post:
+      tags: [conversations]
+      summary: Create a group chat
+      description: Creates a new group conversation with the given members
+      operationId: createGroup
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Group creation payload
+              properties:
+                name:
+                  type: string
+                  description: Name of the group
+                  minLength: 1
+                  maxLength: 64
+                  pattern: "^[a-zA-Z0-9 ]+$"
+                members:
+                  type: array
+                  description: List of user IDs to add (creator is added automatically)
+                  items:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: "^[a-zA-Z0-9-]+$"
+                  minItems: 0
+                  maxItems: 100
+              required: [name]
+      responses:
+        "201":
+          description: Group created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConversationRef"
+              example:
+                conversationId: "group-abc123"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # --- GROUP NAME ---
+  /conversations/{conversationId}/name:
+    parameters:
+      - name: conversationId
+        in: path
+        required: true
+        description: ID of the group conversation
+        schema:
+          type: string
+          pattern: "^[a-zA-Z0-9-]+$"
+          minLength: 1
+          maxLength: 64
+    put:
+      tags: [conversations]
+      summary: Set group name
+      description: Updates the name of a group conversation
+      operationId: setGroupName
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Group name update payload
+              properties:
+                name:
+                  type: string
+                  description: New group name
+                  minLength: 1
+                  maxLength: 64
+                  pattern: "^[a-zA-Z0-9 ]+$"
+              required: [name]
+      responses:
+        "200":
+          description: Name updated successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Confirmation message
+                example: "OK"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # --- GROUP PHOTO ---
+  /conversations/{conversationId}/photo:
+    parameters:
+      - name: conversationId
+        in: path
+        required: true
+        description: ID of the group conversation
+        schema:
+          type: string
+          pattern: "^[a-zA-Z0-9-]+$"
+          minLength: 1
+          maxLength: 64
+    put:
+      tags: [conversations]
+      summary: Set group photo
+      description: Updates the photo of a group conversation
+      operationId: setGroupPhoto
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              description: Group photo upload
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The image file
+                  minLength: 1
+                  maxLength: 10485760
+              required: [file]
+      responses:
+        "200":
+          description: Photo updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Photo update response
+                properties:
+                  photoUrl:
+                    type: string
+                    description: URL of the saved photo
+                    pattern: "^/images/.+"
+                    minLength: 1
+                    maxLength: 256
+                    example: "/images/group_abc123.jpg"
+              example:
+                photoUrl: "/images/group_abc123.jpg"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # --- GET USER BY ID ---
+  /users/{userId}:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        description: ID of the user
+        schema:
+          type: string
+          pattern: "^[a-zA-Z0-9-]+$"
+          minLength: 1
+          maxLength: 64
+    get:
+      tags: [users]
+      summary: Get user by ID
+      description: Returns public profile of a user
+      operationId: getUserById
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+              example:
+                id: "user1"
+                username: "Mario"
+                photoUrl: "/avatars/mario.jpg"
+        "404":
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # --- SET USERNAME ---
+  /users/{userId}/username:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        description: ID of the user
+        schema:
+          type: string
+          pattern: "^[a-zA-Z0-9-]+$"
+          minLength: 1
+          maxLength: 64
+    put:
+      tags: [users]
+      summary: Set username
+      description: Updates the username of the authenticated user
+      operationId: setUsername
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Username update payload
+              properties:
+                username:
+                  type: string
+                  description: New username
+                  minLength: 3
+                  maxLength: 16
+                  pattern: "^[a-zA-Z0-9]+$"
+              required: [username]
+      responses:
+        "200":
+          description: Username updated successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Confirmation message
+                example: "OK"
+        "400":
+          description: Invalid username
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "403":
+          description: Forbidden (modifying another user)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Username already taken
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # --- GET AVATAR ---
+  /avatars/{filename}:
+    parameters:
+      - name: filename
+        in: path
+        required: true
+        description: Filename of the avatar image
+        schema:
+          type: string
+          minLength: 1
+          maxLength: 128
+          pattern: "^[a-zA-Z0-9_.-]+$"
+    get:
+      tags: [users]
+      summary: Get user avatar
+      description: Returns the avatar image file for a user
+      operationId: getAvatar
+      responses:
+        "200":
+          description: Avatar image
+          content:
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+                description: JPEG image data
+            image/png:
+              schema:
+                type: string
+                format: binary
+                description: PNG image data
+        "404":
+          description: Avatar not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+            text/plain:
+              schema:
+                type: string
+                description: Error message
 
 components:
   securitySchemes:
@@ -687,7 +1198,7 @@ components:
           example: "/images/avatar.jpg"
       required: [id, username]
 
-    UserList:
+    UserCollection:
       type: object
       description: Wrapper for list of users
       properties:

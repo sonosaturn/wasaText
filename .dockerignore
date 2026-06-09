@@ -1,7 +1,3 @@
 webui/node_modules
-webui/src
 node_modules
 vendor
-
-!webui/dist
-!webui/nginx.conf

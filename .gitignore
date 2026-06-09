@@ -14,3 +14,4 @@ docker-compose.log
 
 .vscode/*
 !.vscode/extensions.json
+*.db

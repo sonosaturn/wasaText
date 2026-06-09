@@ -22,7 +22,7 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.DELETE("/conversations/:conversationId/messages/:messageId", rt.requireAuth(rt.deleteMessage))
 	rt.router.PUT("/conversations/:conversationId/read", rt.requireAuth(rt.markAsRead))
 	rt.router.PUT("/conversations/:conversationId/messages/:messageId/reaction", rt.requireAuth(rt.reactToMessage))
-	rt.router.POST("/conversations/:conversationId/messages/forward", rt.wrap(rt.forwardMessage))
+	rt.router.POST("/conversations/:conversationId/forward", rt.requireAuth(rt.forwardMessage))
 	rt.router.ServeFiles("/images/*filepath", http.Dir("./images"))
 
 	// 3. Gestione Gruppi

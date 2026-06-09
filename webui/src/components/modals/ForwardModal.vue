@@ -36,8 +36,8 @@ export default {
     async forwardTo(chat) {
       if (!this.msgToForward) return
       try {
-        await this.$axios.post(`/conversations/${chat.id}/messages/forward`, { 
-          message_id: this.msgToForward.id 
+        await this.$axios.post(`/conversations/${chat.id}/forward`, {
+          messageId: this.msgToForward.id
         })
         this.hide()
         alert("Messaggio inoltrato!")

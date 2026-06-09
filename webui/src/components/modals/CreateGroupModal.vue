@@ -64,7 +64,7 @@ export default {
 </script>
 
 <template>
-  <div ref="modalRef" class="modal fade" tabindex="-1" aria-hidden="true">
+  <div ref="modalRef" class="modal fade" tabindex="-1">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">

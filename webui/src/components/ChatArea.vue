@@ -97,8 +97,8 @@ export default {
     },
     getReplyContent(replyId) {
       const original = this.messages.find(m => m.id === replyId)
-      if (!original) return "Messaggio non disponibile"
-      return original.content || (original.photo_url ? "[Foto]" : "...")
+      if (!original) return { text: "Messaggio non disponibile", hasPhoto: false }
+      return { text: original.content || '', hasPhoto: !!original.photo_url }
     },
 
     // --- REAZIONI ---
@@ -153,7 +153,10 @@ export default {
             <div v-if="msg.reply_to_id" class="reply-snippet">
               <div class="reply-bar" />
               <small class="text-muted d-block">Risposta a:</small>
-              <div class="text-truncate small">{{ getReplyContent(msg.reply_to_id) }}</div>
+              <div class="text-truncate small d-flex align-items-center gap-1">
+                <i v-if="getReplyContent(msg.reply_to_id).hasPhoto" class="bi bi-image text-secondary" />
+                <span>{{ getReplyContent(msg.reply_to_id).text || (getReplyContent(msg.reply_to_id).hasPhoto ? '' : '...') }}</span>
+              </div>
             </div>
 
             <div v-if="msg.photo_url" class="mb-1">
@@ -300,4 +303,5 @@ export default {
 .reaction-picker span { cursor: pointer; font-size: 1.2rem; transition: transform 0.1s; }
 .reaction-picker span:hover { transform: scale(1.3); }
 .reactions-display { margin-top: -5px; margin-bottom: 5px; position: relative; bottom: -8px; }
+.reactions-display span { cursor: default; user-select: none; }
 </style>

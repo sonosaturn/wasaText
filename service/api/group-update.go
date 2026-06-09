@@ -31,7 +31,8 @@ func (rt *_router) setGroupName(w http.ResponseWriter, r *http.Request, ps httpr
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	w.Header().Set("Content-Type", "text/plain")
+	_, _ = w.Write([]byte("OK"))
 }
 
 // setGroupPhoto gestisce PUT /conversations/:id/photo
@@ -77,5 +78,5 @@ func (rt *_router) setGroupPhoto(w http.ResponseWriter, r *http.Request, ps http
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(map[string]string{"photo_url": photoURL})
+	_ = json.NewEncoder(w).Encode(map[string]string{"photoUrl": photoURL})
 }

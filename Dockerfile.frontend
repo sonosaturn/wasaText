@@ -1,9 +1,11 @@
+# Stage 1: Build the Vue app
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY webui/ .
+RUN corepack enable && yarn install --immutable && yarn build
+
+# Stage 2: Serve with nginx
 FROM nginx:alpine
-
-# Copia i file compilati del sito (HTML/JS/CSS)
-COPY webui/dist /usr/share/nginx/html
-
-# Copia la configurazione custom di Nginx
+COPY --from=builder /app/dist /usr/share/nginx/html
 COPY webui/nginx.conf /etc/nginx/nginx.conf
-
 EXPOSE 80
