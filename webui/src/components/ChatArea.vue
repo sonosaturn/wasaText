@@ -109,8 +109,13 @@ export default {
       try {
         const msg = this.messages.find(m => m.id === msgId)
         const myReaction = msg.reactions?.find(r => r.user_id === this.myId && r.emoji === emoji)
-        const emojiToSend = myReaction ? '' : emoji
-        await this.$axios.put(`/conversations/${this.chat.id}/messages/${msgId}/reaction`, { emoji: emojiToSend })
+        if (myReaction) {
+          // rimuove la reazione esistente (uncommentMessage)
+          await this.$axios.delete(`/conversations/${this.chat.id}/messages/${msgId}/reaction`)
+        } else {
+          // aggiunge/aggiorna la reazione (commentMessage)
+          await this.$axios.put(`/conversations/${this.chat.id}/messages/${msgId}/reaction`, { emoji })
+        }
         this.showReactionsId = null
       } catch (e) {
         alert("Errore reazione: " + e.message)

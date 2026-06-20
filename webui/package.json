@@ -4,6 +4,7 @@
     "scripts": {
         "dev": "yarn install --immutable --immutable-cache && vite",
         "build": "vite build",
+        "preview": "vite preview",
         "build-dev": "yarn install --immutable --immutable-cache && vite build --mode development",
         "build-prod": "yarn install --immutable --immutable-cache && vite build --mode production",
         "build-embed": "yarn install --immutable --immutable-cache && vite build --mode production --base=/dashboard/",

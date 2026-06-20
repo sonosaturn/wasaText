@@ -8,8 +8,8 @@ import (
 	"github.com/sonosaturn/wasatext/service/api/reqcontext"
 )
 
-// reactToMessage gestisce PUT /conversations/:conversationId/messages/:messageId/reaction
-func (rt *_router) reactToMessage(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
+// commentMessage gestisce PUT /conversations/:conversationId/messages/:messageId/reaction
+func (rt *_router) commentMessage(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 	conversationID := ps.ByName("conversationId")
 	messageID := ps.ByName("messageId")
 
@@ -41,4 +41,17 @@ func (rt *_router) reactToMessage(w http.ResponseWriter, r *http.Request, ps htt
 
 	w.Header().Set("Content-Type", "text/plain")
 	_, _ = w.Write([]byte("OK"))
+}
+
+// uncommentMessage gestisce DELETE /conversations/:conversationId/messages/:messageId/reaction
+func (rt *_router) uncommentMessage(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
+	messageID := ps.ByName("messageId")
+
+	if err := rt.db.UnreactToMessage(messageID, ctx.UserID); err != nil {
+		ctx.Logger.WithError(err).Error("db unreact error")
+		http.Error(w, "db error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

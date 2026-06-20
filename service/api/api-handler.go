@@ -21,7 +21,8 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.POST("/conversations/:conversationId/messages", rt.requireAuth(rt.sendMessage))
 	rt.router.DELETE("/conversations/:conversationId/messages/:messageId", rt.requireAuth(rt.deleteMessage))
 	rt.router.PUT("/conversations/:conversationId/read", rt.requireAuth(rt.markAsRead))
-	rt.router.PUT("/conversations/:conversationId/messages/:messageId/reaction", rt.requireAuth(rt.reactToMessage))
+	rt.router.PUT("/conversations/:conversationId/messages/:messageId/reaction", rt.requireAuth(rt.commentMessage))
+	rt.router.DELETE("/conversations/:conversationId/messages/:messageId/reaction", rt.requireAuth(rt.uncommentMessage))
 	rt.router.POST("/conversations/:conversationId/forward", rt.requireAuth(rt.forwardMessage))
 	rt.router.ServeFiles("/images/*filepath", http.Dir("./images"))
 
@@ -36,7 +37,6 @@ func (rt *_router) Handler() http.Handler {
 	// 4. Utenti
 	rt.router.GET("/users", rt.requireAuth(rt.searchUsers))
 	rt.router.PUT("/users/:userId/photo", rt.requireAuth(rt.setMyPhoto))
-	rt.router.GET("/users/:userId", rt.requireAuth(rt.getUserById))
 	rt.router.PUT("/users/:userId/username", rt.wrap(rt.setUsername))
 
 	// Quando arriva una richiesta tipo "/avatars/1.jpg", chiama la funzione getAvatar

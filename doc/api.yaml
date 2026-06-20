@@ -164,7 +164,7 @@ paths:
       tags: [messages]
       summary: Get conversation history
       description: Retrieves messages for a specific conversation
-      operationId: getConversationMessages
+      operationId: getConversation
       security:
         - BearerAuth: []
       responses:
@@ -574,9 +574,9 @@ paths:
           maxLength: 64
     put:
       tags: [messages]
-      summary: React to a message
-      description: Adds, updates, or removes an emoji reaction (empty emoji removes it)
-      operationId: reactToMessage
+      summary: Comment (react to) a message
+      description: Adds or updates the authenticated user's emoji reaction (comment) on a message
+      operationId: commentMessage
       security:
         - BearerAuth: []
       requestBody:
@@ -609,6 +609,23 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      tags: [messages]
+      summary: Uncomment (remove reaction from) a message
+      description: Removes the authenticated user's emoji reaction (comment) from a message
+      operationId: uncommentMessage
+      security:
+        - BearerAuth: []
+      responses:
+        "204":
+          description: Reaction removed successfully
         "500":
           description: Internal Server Error
           content:
@@ -859,49 +876,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
 
-  # --- GET USER BY ID ---
-  /users/{userId}:
-    parameters:
-      - name: userId
-        in: path
-        required: true
-        description: ID of the user
-        schema:
-          type: string
-          pattern: "^[a-zA-Z0-9-]+$"
-          minLength: 1
-          maxLength: 64
-    get:
-      tags: [users]
-      summary: Get user by ID
-      description: Returns public profile of a user
-      operationId: getUserById
-      security:
-        - BearerAuth: []
-      responses:
-        "200":
-          description: User found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
-              example:
-                id: "user1"
-                username: "Mario"
-                photoUrl: "/avatars/mario.jpg"
-        "404":
-          description: User not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-        "500":
-          description: Internal Server Error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-
   # --- SET USERNAME ---
   /users/{userId}/username:
     parameters:
@@ -918,7 +892,7 @@ paths:
       tags: [users]
       summary: Set username
       description: Updates the username of the authenticated user
-      operationId: setUsername
+      operationId: setMyUserName
       security:
         - BearerAuth: []
       requestBody:
@@ -969,48 +943,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-
-  # --- GET AVATAR ---
-  /avatars/{filename}:
-    parameters:
-      - name: filename
-        in: path
-        required: true
-        description: Filename of the avatar image
-        schema:
-          type: string
-          minLength: 1
-          maxLength: 128
-          pattern: "^[a-zA-Z0-9_.-]+$"
-    get:
-      tags: [users]
-      summary: Get user avatar
-      description: Returns the avatar image file for a user
-      operationId: getAvatar
-      responses:
-        "200":
-          description: Avatar image
-          content:
-            image/jpeg:
-              schema:
-                type: string
-                format: binary
-                description: JPEG image data
-            image/png:
-              schema:
-                type: string
-                format: binary
-                description: PNG image data
-        "404":
-          description: Avatar not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ErrorResponse"
-            text/plain:
-              schema:
-                type: string
-                description: Error message
 
 components:
   securitySchemes:
