@@ -8,7 +8,7 @@ import (
 	"github.com/sonosaturn/wasatext/service/api/reqcontext"
 )
 
-func (rt *_router) searchUsers(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
+func (rt *_router) getUsers(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 	query := r.URL.Query().Get("q")
 	if len(query) == 0 {
 		w.WriteHeader(http.StatusBadRequest)

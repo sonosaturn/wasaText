@@ -112,7 +112,7 @@ export default {
       try {
         const res = await this.$axios.get(`/conversations/${this.selectedChat.id}/messages`)
         this.messages = res.data.messages || []
-        await this.$axios.put(`/conversations/${this.selectedChat.id}/read`)
+        await this.$axios.put(`/conversations/${this.selectedChat.id}/seen`)
       } catch (e) {
         this.selectedChat = null 
       }

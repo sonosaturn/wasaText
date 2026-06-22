@@ -240,7 +240,7 @@ paths:
                 description: Error detail
 
   # --- READ RECEIPT ---
-  /conversations/{conversationId}/read:
+  /conversations/{conversationId}/seen:
     parameters:
       - name: conversationId
         in: path
@@ -253,9 +253,47 @@ paths:
           maxLength: 64
     put:
       tags: [messages]
-      summary: Mark conversation as read
-      description: Updates the read status for the user in this conversation
-      operationId: markAsRead
+      summary: Mark conversation as seen
+      description: Updates the seen/read status for the user in this conversation
+      operationId: setConversationSeen
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Status updated successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Confirmation message
+                example: "OK"
+        "500":
+          description: Internal Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+            text/plain:
+              schema:
+                type: string
+                description: Error detail
+
+  /conversations/{conversationId}/received:
+    parameters:
+      - name: conversationId
+        in: path
+        required: true
+        description: ID of the conversation
+        schema:
+          type: string
+          pattern: "^[a-zA-Z0-9-]+$"
+          minLength: 1
+          maxLength: 64
+    put:
+      tags: [messages]
+      summary: Mark conversation as received
+      description: Updates the received/delivered status for the user in this conversation
+      operationId: setConversationReceived
       security:
         - BearerAuth: []
       responses:
@@ -412,7 +450,7 @@ paths:
       tags: [users]
       summary: Search users
       description: Find users by username
-      operationId: searchUsers
+      operationId: getUsers
       security:
         - BearerAuth: []
       parameters:
@@ -865,6 +903,100 @@ paths:
                 photoUrl: "/images/group_abc123.jpg"
         "400":
           description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # --- PHOTOS ---
+  /photos:
+    post:
+      tags: [users]
+      summary: Upload a photo
+      description: Uploads a photo and returns its ID
+      operationId: uploadPhoto
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              description: Photo upload form
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Image file
+                  minLength: 0
+                  maxLength: 10485760
+      responses:
+        "201":
+          description: Photo uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Upload response
+                properties:
+                  id:
+                    type: string
+                    description: Photo ID
+                    example: "abc123"
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /photos/{photoId}:
+    get:
+      tags: [users]
+      summary: Get a photo
+      description: Returns the binary content of a photo by ID
+      operationId: getPhoto
+      parameters:
+        - name: photoId
+          in: path
+          required: true
+          description: ID of the photo
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: "^[a-zA-Z0-9-]+$"
+      responses:
+        "200":
+          description: Photo content
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+                description: PNG image
+            image/jpeg:
+              schema:
+                type: string
+                format: binary
+                description: JPEG image
+        "404":
+          description: Photo not found
           content:
             application/json:
               schema:

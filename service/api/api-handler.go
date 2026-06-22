@@ -20,7 +20,8 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.GET("/conversations/:conversationId/messages", rt.requireAuth(rt.getConversationMessages))
 	rt.router.POST("/conversations/:conversationId/messages", rt.requireAuth(rt.sendMessage))
 	rt.router.DELETE("/conversations/:conversationId/messages/:messageId", rt.requireAuth(rt.deleteMessage))
-	rt.router.PUT("/conversations/:conversationId/read", rt.requireAuth(rt.markAsRead))
+	rt.router.PUT("/conversations/:conversationId/seen", rt.requireAuth(rt.setConversationSeen))
+	rt.router.PUT("/conversations/:conversationId/received", rt.requireAuth(rt.setConversationReceived))
 	rt.router.PUT("/conversations/:conversationId/messages/:messageId/reaction", rt.requireAuth(rt.commentMessage))
 	rt.router.DELETE("/conversations/:conversationId/messages/:messageId/reaction", rt.requireAuth(rt.uncommentMessage))
 	rt.router.POST("/conversations/:conversationId/forward", rt.requireAuth(rt.forwardMessage))
@@ -35,9 +36,13 @@ func (rt *_router) Handler() http.Handler {
 	rt.router.PUT("/conversations/:conversationId/photo", rt.requireAuth(rt.setGroupPhoto))
 
 	// 4. Utenti
-	rt.router.GET("/users", rt.requireAuth(rt.searchUsers))
+	rt.router.GET("/users", rt.requireAuth(rt.getUsers))
 	rt.router.PUT("/users/:userId/photo", rt.requireAuth(rt.setMyPhoto))
 	rt.router.PUT("/users/:userId/username", rt.wrap(rt.setUsername))
+
+	// Photos (upload/download generico)
+	rt.router.POST("/photos", rt.requireAuth(rt.uploadPhoto))
+	rt.router.GET("/photos/:photoId", rt.requireAuth(rt.getPhoto))
 
 	// Quando arriva una richiesta tipo "/avatars/1.jpg", chiama la funzione getAvatar
 	rt.router.GET("/avatars/:filename", rt.wrap(rt.getAvatar))

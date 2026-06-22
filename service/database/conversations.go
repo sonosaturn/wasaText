@@ -233,8 +233,17 @@ func (db *appdbimpl) LeaveConversation(conversationID string, userID string) err
 
 func (db *appdbimpl) MarkConversationAsRead(conversationID string, userID string) error {
 	_, err := db.c.Exec(`
-        UPDATE conversation_members 
+        UPDATE conversation_members
         SET last_read_at = CURRENT_TIMESTAMP
+        WHERE conversation_id = ? AND user_id = ?
+    `, conversationID, userID)
+	return err
+}
+
+func (db *appdbimpl) MarkConversationAsReceived(conversationID string, userID string) error {
+	_, err := db.c.Exec(`
+        UPDATE conversation_members
+        SET last_seen_at = CURRENT_TIMESTAMP
         WHERE conversation_id = ? AND user_id = ?
     `, conversationID, userID)
 	return err
