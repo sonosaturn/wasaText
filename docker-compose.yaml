@@ -10,7 +10,7 @@ services:
       - "3000:3000"  # Espone le API sulla porta 3000 del tuo PC
     volumes:
       # Persistenza dei dati (Database e Immagini)
-      - ./wasa.db:/app/wasa.db
+      - ./wasa.db:/app/wasatext.db
       - ./images:/app/images
       - ./avatars:/app/avatars
     environment:
