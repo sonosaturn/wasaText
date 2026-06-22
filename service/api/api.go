@@ -46,8 +46,8 @@ func New(cfg Config) (Router, error) {
 	router.RedirectTrailingSlash = false
 	router.RedirectFixedPath = false
 
-	// --- FIX PER IL FRONTEND ---
-	// Se la rotta non è un'API, serve i file statici dalla cartella webui
+	// --- FRONTEND FIX ---
+	// If the route isn't an API one, serve the static files from the webui folder
 	router.NotFound = http.FileServer(http.Dir("webui/dist"))
 
 	return &_router{

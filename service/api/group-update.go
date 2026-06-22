@@ -12,7 +12,7 @@ import (
 	"github.com/sonosaturn/wasatext/service/api/reqcontext"
 )
 
-// setGroupName gestisce PUT /conversations/:id/name
+// setGroupName handles PUT /conversations/:id/name
 func (rt *_router) setGroupName(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 	conversationID := ps.ByName("conversationId")
 
@@ -24,7 +24,7 @@ func (rt *_router) setGroupName(w http.ResponseWriter, r *http.Request, ps httpr
 		return
 	}
 
-	// FIX: Chiamata corretta
+	// FIX: Correct call
 	if err := rt.db.SetConversationName(conversationID, body.Name); err != nil {
 		ctx.Logger.WithError(err).Error("updating group name")
 		http.Error(w, "internal error", http.StatusInternalServerError)
@@ -35,7 +35,7 @@ func (rt *_router) setGroupName(w http.ResponseWriter, r *http.Request, ps httpr
 	_, _ = w.Write([]byte("OK"))
 }
 
-// setGroupPhoto gestisce PUT /conversations/:id/photo
+// setGroupPhoto handles PUT /conversations/:id/photo
 func (rt *_router) setGroupPhoto(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 	conversationID := ps.ByName("conversationId")
 
@@ -70,7 +70,7 @@ func (rt *_router) setGroupPhoto(w http.ResponseWriter, r *http.Request, ps http
 	}
 
 	photoURL := "/images/" + filename
-	// FIX: Chiamata corretta
+	// FIX: Correct call
 	if err := rt.db.SetConversationPhoto(conversationID, photoURL); err != nil {
 		ctx.Logger.WithError(err).Error("updating group photo db")
 		http.Error(w, "internal error", http.StatusInternalServerError)

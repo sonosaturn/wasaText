@@ -22,11 +22,11 @@ func (rt *_router) getUsers(w http.ResponseWriter, r *http.Request, ps httproute
 		return
 	}
 
-	// Struttura di risposta per il JSON
+	// Response struct for JSON
 	type UserResponse struct {
 		ID       string `json:"id"`
 		Username string `json:"username"`
-		PhotoURL string `json:"photo_url"` // <--- AGGIUNTO QUESTO CAMPO
+		PhotoURL string `json:"photo_url"` // <--- ADDED THIS FIELD
 	}
 
 	response := make([]UserResponse, 0)
@@ -35,7 +35,7 @@ func (rt *_router) getUsers(w http.ResponseWriter, r *http.Request, ps httproute
 		response = append(response, UserResponse{
 			ID:       u.ID,
 			Username: u.Username,
-			PhotoURL: u.PhotoURL, // <--- MAPPIAMO IL VALORE DAL DB
+			PhotoURL: u.PhotoURL, // <--- MAP THE VALUE FROM THE DB
 		})
 	}
 

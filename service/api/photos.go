@@ -13,7 +13,7 @@ import (
 	"github.com/sonosaturn/wasatext/service/api/reqcontext"
 )
 
-// uploadPhoto gestisce POST /photos
+// uploadPhoto handles POST /photos
 func (rt *_router) uploadPhoto(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 	if err := r.ParseMultipartForm(10 << 20); err != nil {
 		http.Error(w, "invalid form", http.StatusBadRequest)
@@ -54,7 +54,7 @@ func (rt *_router) uploadPhoto(w http.ResponseWriter, r *http.Request, ps httpro
 	_ = json.NewEncoder(w).Encode(map[string]string{"id": photoID.String()})
 }
 
-// getPhoto gestisce GET /photos/:photoId
+// getPhoto handles GET /photos/:photoId
 func (rt *_router) getPhoto(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 	photoID := ps.ByName("photoId")
 

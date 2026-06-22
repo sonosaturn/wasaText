@@ -11,11 +11,11 @@ func (rt *_router) leaveGroup(w http.ResponseWriter, r *http.Request, ps httprou
 	conversationID := ps.ByName("conversationId")
 	targetUserID := ps.ByName("userId")
 
-	// FIX: Chiamata corretta all'interfaccia
+	// FIX: Correct call to the interface
 	err := rt.db.LeaveConversation(conversationID, targetUserID)
 
 	if err != nil {
-		// Nota: se il DB restituisce sql.ErrNoRows o altro, gestiscilo qui se vuoi 404
+		// Note: if the DB returns sql.ErrNoRows or something else, handle it here if you want a 404
 		ctx.Logger.Error("Errore uscita gruppo: ", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return

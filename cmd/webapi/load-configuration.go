@@ -14,18 +14,18 @@ import (
 // loadConfiguration and values from flags, environment variable or configuration file will be loaded.
 type WebAPIConfiguration struct {
 	Config struct {
-		Path string `conf:"default:./config.yml"` // Cambiato da /conf/ a ./ per comodità locale
+		Path string `conf:"default:./config.yml"` // Changed from /conf/ to ./ for local convenience
 	}
 	Web struct {
 		APIHost         string        `conf:"default:0.0.0.0:3000"`
 		DebugHost       string        `conf:"default:0.0.0.0:4000"`
-		ReadTimeout     time.Duration `conf:"default:10s"` // Aumentato a 10s per gestire upload foto lenti
-		WriteTimeout    time.Duration `conf:"default:10s"` // Aumentato a 10s
+		ReadTimeout     time.Duration `conf:"default:10s"` // Increased to 10s to handle slow photo uploads
+		WriteTimeout    time.Duration `conf:"default:10s"` // Increased to 10s
 		ShutdownTimeout time.Duration `conf:"default:5s"`
 	}
 	Debug bool
 	DB    struct {
-		Filename string `conf:"default:./wasatext.db"` // ora salva nel progetto, non in /tmp
+		Filename string `conf:"default:./wasatext.db"` // now saves in the project, not in /tmp
 	}
 }
 

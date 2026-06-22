@@ -1,15 +1,15 @@
 version: '3.8'
 
 services:
-  # SERVIZIO BACKEND (API GO)
+  # BACKEND SERVICE (GO API)
   backend:
     build:
       context: .
       dockerfile: Dockerfile.backend
     ports:
-      - "3000:3000"  # Espone le API sulla porta 3000 del tuo PC
+      - "3000:3000"  # Exposes the API on port 3000 of your PC
     volumes:
-      # Persistenza dei dati (Database e Immagini)
+      # Data persistence (Database and Images)
       - ./wasa.db:/app/wasatext.db
       - ./images:/app/images
       - ./avatars:/app/avatars
@@ -17,13 +17,13 @@ services:
       - GO_ENV=production
     restart: always
 
-  # SERVIZIO FRONTEND (NGINX)
+  # FRONTEND SERVICE (NGINX)
   frontend:
     build:
       context: .
       dockerfile: Dockerfile.frontend
     ports:
-      - "8080:80"    # Espone il sito web sulla porta 8080 del tuo PC
+      - "8080:80"    # Exposes the website on port 8080 of your PC
     depends_on:
-      - backend      # Fa partire il frontend solo dopo il backend
+      - backend      # Starts the frontend only after the backend
     restart: always

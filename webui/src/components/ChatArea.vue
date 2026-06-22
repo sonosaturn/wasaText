@@ -46,7 +46,7 @@ export default {
       return iso ? new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
     },
     
-    // --- GESTIONE FILE ---
+    // --- FILE HANDLING ---
     onFileSelected(e) {
       const file = e.target.files[0]
       if (file) {
@@ -58,7 +58,7 @@ export default {
       this.selectedFile = null
     },
 
-    // --- INVIO ---
+    // --- SENDING ---
     send() {
       if (!this.newMessage.trim() && !this.selectedFile) return
 
@@ -75,19 +75,19 @@ export default {
       this.scrollToBottom(true)
     },
 
-    // --- CANCELLAZIONE (NUOVO) ---
+    // --- DELETION (NEW) ---
     async deleteMsg(msg) {
       if (!confirm("Vuoi eliminare questo messaggio?")) return
       try {
         await this.$axios.delete(`/conversations/${this.chat.id}/messages/${msg.id}`)
-        // Emettiamo evento per dire alla Home di ricaricare i messaggi
+        // Emit event to tell Home to reload the messages
         this.$emit('message-deleted')
       } catch (e) {
         alert("Errore eliminazione: " + e.message)
       }
     },
 
-    // --- RISPOSTE ---
+    // --- REPLIES ---
     startReply(msg) {
       this.replyingTo = msg
       this.$refs.inputField?.focus()
@@ -101,7 +101,7 @@ export default {
       return { text: original.content || '', hasPhoto: !!original.photo_url }
     },
 
-    // --- REAZIONI ---
+    // --- REACTIONS ---
     toggleReactionMenu(msgId) {
       this.showReactionsId = this.showReactionsId === msgId ? null : msgId
     },
@@ -110,10 +110,10 @@ export default {
         const msg = this.messages.find(m => m.id === msgId)
         const myReaction = msg.reactions?.find(r => r.user_id === this.myId && r.emoji === emoji)
         if (myReaction) {
-          // rimuove la reazione esistente (uncommentMessage)
+          // removes the existing reaction (uncommentMessage)
           await this.$axios.delete(`/conversations/${this.chat.id}/messages/${msgId}/reaction`)
         } else {
-          // aggiunge/aggiorna la reazione (commentMessage)
+          // adds/updates the reaction (commentMessage)
           await this.$axios.put(`/conversations/${this.chat.id}/messages/${msgId}/reaction`, { emoji })
         }
         this.showReactionsId = null

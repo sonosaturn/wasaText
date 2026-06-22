@@ -10,24 +10,24 @@ import (
 	"github.com/sonosaturn/wasatext/service/api/reqcontext"
 )
 
-// getAvatar gestisce la richiesta per visualizzare una foto profilo
+// getAvatar handles the request to display a profile photo
 // URL: GET /avatars/:filename
 func (rt *_router) getAvatar(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
-	// 1. Recuperiamo il nome del file dall'URL (es. "10.jpg")
+	// 1. Get the filename from the URL (e.g. "10.jpg")
 	filename := ps.ByName("filename")
 
-	// 2. Costruiamo il percorso completo (es. "./avatars/10.jpg")
-	// Usa filepath.Join per sicurezza (evita hack tipo ../../)
+	// 2. Build the full path (e.g. "./avatars/10.jpg")
+	// Use filepath.Join for safety (avoids ../../ -style hacks)
 	avatarPath := filepath.Join("avatars", filename)
 
-	// 3. Controlliamo se il file esiste
+	// 3. Check if the file exists
 	if _, err := os.Stat(avatarPath); errors.Is(err, os.ErrNotExist) {
-		// Se non esiste, restituiamo 404 Not Found
+		// If it doesn't exist, return 404 Not Found
 		http.Error(w, "Image not found", http.StatusNotFound)
 		return
 	}
 
-	// 4. Serviamo il file direttamente
-	// http.ServeFile gestisce da solo Content-Type, caching e stream dei byte
+	// 4. Serve the file directly
+	// http.ServeFile handles Content-Type, caching and byte streaming on its own
 	http.ServeFile(w, r, avatarPath)
 }

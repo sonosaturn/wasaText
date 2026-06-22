@@ -8,7 +8,7 @@ import (
 	"github.com/sonosaturn/wasatext/service/api/reqcontext"
 )
 
-// commentMessage gestisce PUT /conversations/:conversationId/messages/:messageId/reaction
+// commentMessage handles PUT /conversations/:conversationId/messages/:messageId/reaction
 func (rt *_router) commentMessage(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 	conversationID := ps.ByName("conversationId")
 	messageID := ps.ByName("messageId")
@@ -21,7 +21,7 @@ func (rt *_router) commentMessage(w http.ResponseWriter, r *http.Request, ps htt
 		return
 	}
 
-	// Se emoji è stringa vuota, rimuoviamo la reazione
+	// If emoji is an empty string, remove the reaction
 	if body.Emoji == "" {
 		err := rt.db.UnreactToMessage(messageID, ctx.UserID)
 		if err != nil {
@@ -30,7 +30,7 @@ func (rt *_router) commentMessage(w http.ResponseWriter, r *http.Request, ps htt
 			return
 		}
 	} else {
-		// Altrimenti aggiungiamo/aggiorniamo (Passiamo anche conversationID ora)
+		// Otherwise add/update (Now also passing conversationID)
 		err := rt.db.ReactToMessage(conversationID, messageID, ctx.UserID, body.Emoji)
 		if err != nil {
 			ctx.Logger.WithError(err).Error("db react error")
@@ -43,7 +43,7 @@ func (rt *_router) commentMessage(w http.ResponseWriter, r *http.Request, ps htt
 	_, _ = w.Write([]byte("OK"))
 }
 
-// uncommentMessage gestisce DELETE /conversations/:conversationId/messages/:messageId/reaction
+// uncommentMessage handles DELETE /conversations/:conversationId/messages/:messageId/reaction
 func (rt *_router) uncommentMessage(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 	messageID := ps.ByName("messageId")
 

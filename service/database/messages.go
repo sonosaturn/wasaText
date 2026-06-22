@@ -35,7 +35,7 @@ func (db *appdbimpl) SendMessage(conversationID string, senderID string, content
 		ID:             msgID,
 		ConversationID: conversationID,
 		SenderID:       senderID,
-		// SenderUsername: NON lo settiamo qui, lo setta l'API wrapper perché il DB non lo sa subito senza un'altra query
+		// SenderUsername: NOT set here, the API wrapper sets it because the DB doesn't know it immediately without another query
 		Content:   content,
 		PhotoURL:  photoURL,
 		ReplyToID: &replyToID,
@@ -48,7 +48,7 @@ func (db *appdbimpl) SendMessage(conversationID string, senderID string, content
 func (db *appdbimpl) GetConversationMessages(conversationID string, userID string) ([]Message, error) {
 	var messages []Message
 
-	// FIX: Join con tabella USERS per prendere il username del mittente
+	// FIX: Join with USERS table to get the sender's username
 	query := `
 		SELECT 
 			m.id, 

@@ -9,11 +9,11 @@ func applyCORSHandler(h http.Handler) http.Handler {
 	return handlers.CORS(
 		handlers.AllowedHeaders([]string{
 			"Content-Type",
-			"Authorization", // Fondamentale per il Bearer Token!
+			"Authorization", // Essential for the Bearer Token!
 		}),
 		handlers.AllowedMethods([]string{"GET", "POST", "OPTIONS", "DELETE", "PUT"}),
-		// In sviluppo usiamo "*" o "http://localhost:5173"
+		// In development we use "*" or "http://localhost:5173"
 		handlers.AllowedOrigins([]string{"*"}),
-		handlers.MaxAge(86400), // Cache del CORS per 24 ore (evita troppe richieste OPTIONS)
+		handlers.MaxAge(86400), // CORS cache for 24 hours (avoids too many OPTIONS requests)
 	)(h)
 }

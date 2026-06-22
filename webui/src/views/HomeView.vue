@@ -17,7 +17,7 @@ export default {
   },
   data() {
     return {
-      // FIX: Usa sessionStorage per resettare al riavvio del browser
+      // FIX: Use sessionStorage to reset on browser restart
       token: sessionStorage.getItem('token'),
       myId: sessionStorage.getItem('myId'),
       username: sessionStorage.getItem('username'),
@@ -37,7 +37,7 @@ export default {
     }
     this.$axios.defaults.headers.common['Authorization'] = `Bearer ${this.token}`
     this.loading = true
-    await this.refreshProfile() // Questo ora controlla se esisti ancora nel DB
+    await this.refreshProfile() // This now checks whether you still exist in the DB
     await this.loadConversations()
     this.loading = false
     
@@ -57,8 +57,8 @@ export default {
         const res = await this.$axios.get(`/users?q=${this.username}`)
         const me = res.data.users?.find(u => u.username === this.username)
         
-        // FIX CRITICO: Se il DB è stato cancellato, l'utente non esiste più.
-        // Se 'me' è undefined, buttiamo fuori l'utente.
+        // CRITICAL FIX: If the DB has been deleted, the user no longer exists.
+        // If 'me' is undefined, log the user out.
         if (!me) {
           this.logout()
           return
@@ -72,7 +72,7 @@ export default {
           sessionStorage.setItem('myPhoto', me.photo_url)
         }
       } catch (e) {
-        // Se l'API fallisce gravemente (es. 500 o 401), logout
+        // If the API fails badly (e.g. 500 or 401), log out
         if (e.response && (e.response.status === 401 || e.response.status === 404)) {
             this.logout()
         }
@@ -185,7 +185,7 @@ export default {
     },
 
     logout() {
-      // Pulisce la sessione corrente
+      // Clears the current session
       sessionStorage.clear()
       this.$router.push('/login')
     },

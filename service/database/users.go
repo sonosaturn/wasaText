@@ -80,7 +80,7 @@ func (db *appdbimpl) SetUserPhoto(id string, photoURL string) error {
 	return err
 }
 
-// SetUsername aggiorna il nome utente se non è già in uso
+// SetUsername updates the username if it's not already in use
 func (db *appdbimpl) SetUsername(id string, newName string) (bool, error) {
 	var otherId string
 	err := db.c.QueryRow("SELECT id FROM users WHERE username = ?", newName).Scan(&otherId)

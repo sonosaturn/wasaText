@@ -9,11 +9,11 @@ import (
 	"github.com/sonosaturn/wasatext/service/database"
 )
 
-// getConversationMessages gestisce GET /conversations/:conversationId/messages
+// getConversationMessages handles GET /conversations/:conversationId/messages
 func (rt *_router) getConversationMessages(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 	conversationID := ps.ByName("conversationId")
 
-	// 1. Recupera i messaggi dal DB
+	// 1. Retrieve the messages from the DB
 	messages, err := rt.db.GetConversationMessages(conversationID, ctx.UserID)
 	if err != nil {
 		ctx.Logger.WithError(err).Error("Can't list messages")
@@ -21,12 +21,12 @@ func (rt *_router) getConversationMessages(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// FIX: Assicuriamoci che non sia nil per evitare problemi nel JSON (anche se Go gestisce nil come null/empty)
+	// FIX: Make sure it's not nil to avoid JSON issues (even though Go handles nil as null/empty)
 	if messages == nil {
 		messages = []database.Message{}
 	}
 
-	// FIX LINTER: Wrappiamo la lista in un oggetto JSON
+	// LINTER FIX: Wrap the list in a JSON object
 	type Response struct {
 		Messages []database.Message `json:"messages"`
 	}

@@ -7,13 +7,13 @@ import (
 	"github.com/sonosaturn/wasatext/service/api/reqcontext"
 )
 
-// deleteMessage gestisce DELETE /conversations/:conversationId/messages/:messageId
+// deleteMessage handles DELETE /conversations/:conversationId/messages/:messageId
 func (rt *_router) deleteMessage(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
-	// Recuperiamo entrambi i parametri dal percorso
+	// Retrieve both parameters from the path
 	conversationID := ps.ByName("conversationId")
 	messageID := ps.ByName("messageId")
 
-	// Ora passiamo tutti e 3 i parametri richiesti dal DB
+	// Now pass all 3 parameters required by the DB
 	err := rt.db.DeleteMessage(conversationID, messageID, ctx.UserID)
 	if err != nil {
 		ctx.Logger.WithError(err).Error("Can't delete message")

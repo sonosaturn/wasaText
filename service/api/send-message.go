@@ -59,7 +59,7 @@ func (rt *_router) sendMessage(w http.ResponseWriter, r *http.Request, ps httpro
 		return
 	}
 
-	// FIX: Assegniamo il username dal contesto, così il frontend lo vede subito
+	// FIX: Assign the username from the context, so the frontend sees it right away
 	msg.SenderUsername = ctx.UserName
 
 	w.Header().Set("Content-Type", "application/json")

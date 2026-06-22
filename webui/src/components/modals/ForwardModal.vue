@@ -12,7 +12,7 @@ export default {
       msgToForward: null,
       searchQuery: ''
     }
-  }, // Emette un evento per dire "fatto"
+  }, // Emits an event to say "done"
   computed: {
     filteredConversations() {
       if (!this.searchQuery) return this.conversations

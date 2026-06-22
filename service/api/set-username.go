@@ -12,7 +12,7 @@ import (
 func (rt *_router) setUsername(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 	idStr := ps.ByName("userId")
 
-	// Fallback: se il middleware non ha settato ctx.UserID, proviamo a leggerlo dall'header
+	// Fallback: if the middleware hasn't set ctx.UserID, try reading it from the header
 	if ctx.UserID == "" {
 		authHeader := r.Header.Get("Authorization")
 		if strings.HasPrefix(authHeader, "Bearer ") {
@@ -20,7 +20,7 @@ func (rt *_router) setUsername(w http.ResponseWriter, r *http.Request, ps httpro
 		}
 	}
 
-	// Verifica che l'utente stia modificando se stesso
+	// Check that the user is modifying themselves
 	if idStr != ctx.UserID {
 		http.Error(w, "forbidden", http.StatusForbidden)
 		return
@@ -40,7 +40,7 @@ func (rt *_router) setUsername(w http.ResponseWriter, r *http.Request, ps httpro
 		return
 	}
 
-	// Chiama il DB
+	// Call the DB
 	success, err := rt.db.SetUsername(idStr, body.Username)
 	if err != nil {
 		ctx.Logger.WithError(err).Error("setting username")

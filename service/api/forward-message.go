@@ -34,7 +34,7 @@ func (rt *_router) forwardMessage(w http.ResponseWriter, r *http.Request, ps htt
 		return
 	}
 
-	// FIX: Passiamo TRUE come ultimo parametro per indicare che è Inoltrato
+	// FIX: Pass TRUE as the last parameter to indicate it's Forwarded
 	forwardedMsg, err := rt.db.SendMessage(destConversationID, ctx.UserID, content, photoURL, "", true)
 	if err != nil {
 		ctx.Logger.WithError(err).Error("forwarding message")

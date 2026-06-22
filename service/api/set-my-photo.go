@@ -10,7 +10,7 @@ import (
 	"github.com/sonosaturn/wasatext/service/api/reqcontext"
 )
 
-// setMyPhoto gestisce l'upload della foto profilo
+// setMyPhoto handles the profile photo upload
 // PUT /users/:userId/photo
 func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 	idStr := ps.ByName("userId")
@@ -31,11 +31,11 @@ func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprou
 	}
 	defer file.Close()
 
-	// Crea la cartella se non esiste
+	// Create the folder if it doesn't exist
 	avatarDir := filepath.Join(".", "avatars")
 	_ = os.MkdirAll(avatarDir, 0755)
 
-	// Percorso file: ./avatars/USERID.jpg
+	// File path: ./avatars/USERID.jpg
 	filename := idStr + ".jpg"
 	path := filepath.Join(avatarDir, filename)
 
@@ -53,8 +53,8 @@ func (rt *_router) setMyPhoto(w http.ResponseWriter, r *http.Request, ps httprou
 		return
 	}
 
-	// >>> FIX IMPORTANTE: Aggiorniamo il Database! <<<
-	// Senza questo, al prossimo login la foto tornerà quella di default.
+	// >>> IMPORTANT FIX: Update the Database! <<<
+	// Without this, the photo will revert to the default one on the next login.
 	photoURL := "/avatars/" + filename
 	if err := rt.db.SetUserPhoto(idStr, photoURL); err != nil {
 		ctx.Logger.WithError(err).Error("Error updating user photo in DB")

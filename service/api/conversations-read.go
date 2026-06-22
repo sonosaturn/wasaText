@@ -7,7 +7,7 @@ import (
 	"github.com/sonosaturn/wasatext/service/api/reqcontext"
 )
 
-// setConversationSeen gestisce PUT /conversations/:conversationId/seen
+// setConversationSeen handles PUT /conversations/:conversationId/seen
 func (rt *_router) setConversationSeen(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx reqcontext.RequestContext) {
 	conversationID := ps.ByName("conversationId")
 

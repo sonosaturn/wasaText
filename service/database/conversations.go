@@ -5,7 +5,7 @@ import (
 	"github.com/gofrs/uuid"
 )
 
-// GetMyConversations recupera la lista delle chat (sia gruppi che private)
+// GetMyConversations retrieves the list of chats (both groups and private)
 func (db *appdbimpl) GetMyConversations(userID string) ([]Conversation, error) {
 	var conversations []Conversation
 
@@ -206,9 +206,9 @@ func (db *appdbimpl) AddToConversation(conversationID string, userID string) err
 	return err
 }
 
-// FIX: Modificato per cancellare l'intera chat se è diretta (1-to-1)
+// FIX: Changed to delete the entire chat if it's direct (1-to-1)
 func (db *appdbimpl) RemoveFromConversation(conversationID string, userID string) error {
-	// 1. Controlla se è un gruppo
+	// 1. Check if it's a group
 	var isGroup bool
 	err := db.c.QueryRow("SELECT is_group FROM conversations WHERE id = ?", conversationID).Scan(&isGroup)
 	if err != nil {
@@ -216,12 +216,12 @@ func (db *appdbimpl) RemoveFromConversation(conversationID string, userID string
 	}
 
 	if !isGroup {
-		// SE È CHAT DIRETTA: Elimina l'intera conversazione.
-		// Grazie al CASCADE, verranno eliminati anche i messaggi e l'altro membro.
+		// IF IT'S A DIRECT CHAT: Delete the entire conversation.
+		// Thanks to CASCADE, the messages and the other member will also be deleted.
 		_, err := db.c.Exec("DELETE FROM conversations WHERE id = ?", conversationID)
 		return err
 	} else {
-		// SE È UN GRUPPO: Rimuovi solo il membro (comportamento standard)
+		// IF IT'S A GROUP: Remove only the member (standard behavior)
 		_, err := db.c.Exec("DELETE FROM conversation_members WHERE conversation_id = ? AND user_id = ?", conversationID, userID)
 		return err
 	}

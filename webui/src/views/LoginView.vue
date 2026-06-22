@@ -15,7 +15,7 @@ export default {
       try {
         const res = await this.$axios.post('/session', { name: this.username })
         
-        // USA SESSION STORAGE (Si cancella alla chiusura del browser)
+        // USE SESSION STORAGE (Cleared when the browser closes)
         sessionStorage.setItem('token', res.data.identifier)
         sessionStorage.setItem('username', this.username)
         

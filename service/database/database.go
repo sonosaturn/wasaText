@@ -5,14 +5,14 @@ import (
 	"errors"
 )
 
-// User è la struttura dell'utente
+// User is the user struct
 type User struct {
 	ID       string `json:"id"`
 	Username string `json:"username"`
 	PhotoURL string `json:"photo_url"`
 }
 
-// Conversation è la struttura completa che inviamo al frontend
+// Conversation is the full struct we send to the frontend
 type Conversation struct {
 	ID                  string `json:"id"`
 	Title               string `json:"title"`
@@ -26,19 +26,19 @@ type Conversation struct {
 	UnreadCount         int    `json:"unread_count"`
 }
 
-// Reaction rappresenta una singola reazione a un messaggio
+// Reaction represents a single reaction to a message
 type Reaction struct {
 	UserID   string `json:"user_id"`
 	Username string `json:"username"`
 	Emoji    string `json:"emoji"`
 }
 
-// Message è la struttura per i messaggi
+// Message is the struct for messages
 type Message struct {
 	ID             string     `json:"id"`
 	ConversationID string     `json:"conversationId"`
 	SenderID       string     `json:"senderId"`
-	SenderUsername string     `json:"sender_username"` // <--- NUOVO: Nome mittente
+	SenderUsername string     `json:"sender_username"` // <--- NEW: sender name
 	Content        string     `json:"content"`
 	PhotoURL       string     `json:"photo_url"`
 	Timestamp      string     `json:"timestamp"`
@@ -93,7 +93,7 @@ func New(db *sql.DB) (AppDatabase, error) {
 		return nil, err
 	}
 
-	// Schema invariato (le colonne nuove le abbiamo messe al giro scorso, queste sono solo struct per il JSON)
+	// Schema unchanged (the new columns were added last round, these are just structs for JSON)
 	var tableQueries = []string{
 		`CREATE TABLE IF NOT EXISTS users (
             id TEXT NOT NULL PRIMARY KEY,

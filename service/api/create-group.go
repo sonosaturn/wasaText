@@ -3,7 +3,7 @@ package api
 import (
 	"encoding/json"
 	"net/http"
-	// "strconv" <--- RIMOSSO: Non serve più perché groupID è già stringa
+	// "strconv" <--- REMOVED: No longer needed because groupID is already a string
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/sonosaturn/wasatext/service/api/reqcontext"
@@ -11,14 +11,14 @@ import (
 
 type createGroupRequest struct {
 	Name    string   `json:"name"`
-	Members []string `json:"members"` // Stringhe (UUID)
+	Members []string `json:"members"` // Strings (UUID)
 }
 
 type groupResponse struct {
 	ConversationID string `json:"conversationId"`
 }
 
-// createGroup gestisce POST /groups
+// createGroup handles POST /groups
 func (rt *_router) createGroup(w http.ResponseWriter, r *http.Request, _ httprouter.Params, ctx reqcontext.RequestContext) {
 	var req createGroupRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -31,7 +31,7 @@ func (rt *_router) createGroup(w http.ResponseWriter, r *http.Request, _ httprou
 		return
 	}
 
-	// Aggiungi te stesso (creatore) ai membri se non ci sei già
+	// Add yourself (creator) to the members if you're not already there
 	found := false
 	for _, m := range req.Members {
 		if m == ctx.UserID {
@@ -43,7 +43,7 @@ func (rt *_router) createGroup(w http.ResponseWriter, r *http.Request, _ httprou
 		req.Members = append(req.Members, ctx.UserID)
 	}
 
-	// Chiama il database
+	// Call the database
 	groupID, err := rt.db.CreateGroup(req.Name, req.Members)
 	if err != nil {
 		ctx.Logger.WithError(err).Error("create group failed")
@@ -51,8 +51,8 @@ func (rt *_router) createGroup(w http.ResponseWriter, r *http.Request, _ httprou
 		return
 	}
 
-	// Restituisci l'ID del gruppo
-	// FIX: groupID è già una stringa (UUID), non serve strconv.FormatInt
+	// Return the group ID
+	// FIX: groupID is already a string (UUID), strconv.FormatInt isn't needed
 	res := groupResponse{
 		ConversationID: groupID,
 	}

@@ -8,8 +8,8 @@ EXPOSE 3000
 WORKDIR /app/
 COPY --from=builder /app/webapi ./
 
-# Cambia il proprietario della cartella /app all'utente con ID 1000.
-# Questo permette all'utente 1000 di creare il file .db al suo interno.
+# Change the owner of the /app folder to the user with ID 1000.
+# This allows user 1000 to create the .db file inside it.
 RUN chown -R 1000:1000 /app
 # -----------------------------
 
