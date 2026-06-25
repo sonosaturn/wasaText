@@ -68,7 +68,6 @@ type AppDatabase interface {
 	RemoveFromConversation(conversationID string, userID string) error
 	LeaveConversation(conversationID string, userID string) error
 	MarkConversationAsRead(conversationID string, userID string) error
-	MarkConversationAsReceived(conversationID string, userID string) error
 
 	SendMessage(conversationID string, senderID string, content string, photoURL string, replyToID string, forwarded bool) (*Message, error)
 	GetConversationMessages(conversationID string, userID string) ([]Message, error)
