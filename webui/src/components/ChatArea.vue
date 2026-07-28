@@ -5,7 +5,7 @@ export default {
     messages: Array,
     myId: String
   },
-  emits: ['send-message', 'open-info', 'forward-message', 'message-deleted'], // Aggiunto 'message-deleted'
+  emits: ['send-message', 'open-info', 'forward-message', 'message-deleted'], // Added 'message-deleted'
   data() {
     return {
       newMessage: '',
@@ -77,13 +77,13 @@ export default {
 
     // --- DELETION (NEW) ---
     async deleteMsg(msg) {
-      if (!confirm("Vuoi eliminare questo messaggio?")) return
+      if (!confirm("Delete this message?")) return
       try {
         await this.$axios.delete(`/conversations/${this.chat.id}/messages/${msg.id}`)
         // Emit event to tell Home to reload the messages
         this.$emit('message-deleted')
       } catch (e) {
-        alert("Errore eliminazione: " + e.message)
+        alert("Delete failed: " + e.message)
       }
     },
 
@@ -97,7 +97,7 @@ export default {
     },
     getReplyContent(replyId) {
       const original = this.messages.find(m => m.id === replyId)
-      if (!original) return { text: "Messaggio non disponibile", hasPhoto: false }
+      if (!original) return { text: "Message unavailable", hasPhoto: false }
       return { text: original.content || '', hasPhoto: !!original.photo_url }
     },
 
@@ -118,7 +118,7 @@ export default {
         }
         this.showReactionsId = null
       } catch (e) {
-        alert("Errore reazione: " + e.message)
+        alert("Reaction failed: " + e.message)
       }
     },
 
@@ -140,7 +140,7 @@ export default {
         <img :src="getFullUrl(chat.photo_url)" class="avatar-sm" @error="handleImgError">
         <div class="flex-grow-1 ms-3" style="cursor: pointer;" @click="$emit('open-info')">
           <span class="fw-bold d-block">{{ chat.displayName }}</span>
-          <small class="text-muted">clicca per info</small>
+          <small class="text-muted">click for info</small>
         </div>
       </div>
 
@@ -152,12 +152,12 @@ export default {
             </div>
 
             <div v-if="msg.forwarded" class="forwarded-label">
-              <i class="bi bi-forward" /> Inoltrato
+              <i class="bi bi-forward" /> Forwarded
             </div>
 
             <div v-if="msg.reply_to_id" class="reply-snippet">
               <div class="reply-bar" />
-              <small class="text-muted d-block">Risposta a:</small>
+              <small class="text-muted d-block">Replying to:</small>
               <div class="text-truncate small d-flex align-items-center gap-1">
                 <i v-if="getReplyContent(msg.reply_to_id).hasPhoto" class="bi bi-image text-secondary" />
                 <span>{{ getReplyContent(msg.reply_to_id).text || (getReplyContent(msg.reply_to_id).hasPhoto ? '' : '...') }}</span>
@@ -186,10 +186,10 @@ export default {
             </div>
 
             <div class="msg-actions">
-              <button title="Reagisci" @click="toggleReactionMenu(msg.id)">😊</button>
-              <button title="Rispondi" @click="startReply(msg)"><i class="bi bi-reply" /></button>
-              <button title="Inoltra" @click="$emit('forward-message', msg)"><i class="bi bi-forward" /></button>
-              <button v-if="msg.senderId === myId" title="Elimina" class="text-danger" @click="deleteMsg(msg)">
+              <button title="React" @click="toggleReactionMenu(msg.id)">😊</button>
+              <button title="Reply" @click="startReply(msg)"><i class="bi bi-reply" /></button>
+              <button title="Forward" @click="$emit('forward-message', msg)"><i class="bi bi-forward" /></button>
+              <button v-if="msg.senderId === myId" title="Delete" class="text-danger" @click="deleteMsg(msg)">
                 <i class="bi bi-trash" />
               </button>
             </div>
@@ -210,9 +210,9 @@ export default {
         <div v-if="replyingTo" class="reply-banner">
           <div class="d-flex justify-content-between align-items-center">
             <div>
-              <span class="text-primary small">Rispondendo a...</span>
+              <span class="text-primary small">Replying to...</span>
               <div class="small text-truncate text-muted" style="max-width: 300px;">
-                {{ replyingTo.content || '[Foto]' }}
+                {{ replyingTo.content || '[Photo]' }}
               </div>
             </div>
             <button class="btn btn-sm btn-link text-danger" @click="cancelReply"><i class="bi bi-x-lg" /></button>
@@ -234,7 +234,7 @@ export default {
           <button class="btn btn-link text-secondary" @click="$refs.fileInput.click()">
             <i class="bi bi-paperclip fs-5" />
           </button>
-          <input ref="inputField" v-model="newMessage" type="text" class="form-control shadow-none" placeholder="Scrivi un messaggio..." @keyup.enter="send">
+          <input ref="inputField" v-model="newMessage" type="text" class="form-control shadow-none" placeholder="Type a message..." @keyup.enter="send">
           <button class="btn btn-link text-muted" @click="send"><i class="bi bi-send-fill fs-5" /></button>
         </div>
       </div>
@@ -244,7 +244,7 @@ export default {
       <div class="text-center">
         <i class="bi bi-chat-left-text fs-1 mb-3 d-block" />
         <h3>WasaText</h3>
-        <p>Seleziona una conversazione per iniziare</p>
+        <p>Select a conversation to start</p>
       </div>
     </div>
   </div>
@@ -292,7 +292,7 @@ export default {
 .reply-snippet { background: rgba(0,0,0,0.05); border-radius: 4px; padding: 5px; margin-bottom: 5px; position: relative; overflow: hidden; }
 .reply-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #00a884; }
 
-/* Reazioni */
+/* Reactions */
 .msg-actions {
   display: none; position: absolute; top: -15px; right: 10px; 
   background: white; border-radius: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);

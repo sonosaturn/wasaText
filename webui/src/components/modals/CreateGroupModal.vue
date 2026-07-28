@@ -56,7 +56,7 @@ export default {
         this.hide()
         this.$emit('group-created')
       } catch (e) {
-        alert("Errore creazione gruppo: " + (e.response?.data || e.message))
+        alert("Could not create group: " + (e.response?.data || e.message))
       }
     }
   }
@@ -68,15 +68,15 @@ export default {
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Nuovo Gruppo</h5>
+          <h5 class="modal-title">New Group</h5>
           <button type="button" class="btn-close" @click="hide" />
         </div>
         <div class="modal-body">
-          <input v-model="groupName" type="text" class="form-control mb-3" placeholder="Nome Gruppo">
+          <input v-model="groupName" type="text" class="form-control mb-3" placeholder="Group name">
           
           <div class="input-group mb-2">
-            <input v-model="searchQuery" type="text" class="form-control" placeholder="Cerca membri..." @keyup.enter="searchUsers">
-            <button class="btn btn-outline-secondary" @click="searchUsers">Cerca</button>
+            <input v-model="searchQuery" type="text" class="form-control" placeholder="Search members..." @keyup.enter="searchUsers">
+            <button class="btn btn-outline-secondary" @click="searchUsers">Search</button>
           </div>
 
           <div v-if="searchResults.length > 0" class="list-group mb-3">
@@ -92,7 +92,7 @@ export default {
           </div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-primary" :disabled="!groupName" @click="createGroup">Crea</button>
+          <button class="btn btn-primary" :disabled="!groupName" @click="createGroup">Create</button>
         </div>
       </div>
     </div>

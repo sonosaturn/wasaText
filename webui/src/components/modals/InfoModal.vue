@@ -88,7 +88,7 @@ export default {
       } catch (e) { alert(e.message) }
     },
     async leaveChat() {
-      if (!confirm("Sei sicuro?")) return
+      if (!confirm("Are you sure?")) return
       try {
         const myId = sessionStorage.getItem('myId') // FIX: sessionStorage
         await this.$axios.delete(`/conversations/${this.chat.id}/members/${myId}`)
@@ -105,7 +105,7 @@ export default {
     <div class="modal-dialog">
       <div v-if="chat" class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Info {{ chat.is_group ? 'Gruppo' : 'Contatto' }}</h5>
+          <h5 class="modal-title">Info {{ chat.is_group ? 'Group' : 'Contact' }}</h5>
           <button type="button" class="btn-close" @click="hide" />
         </div>
         <div class="modal-body text-center">
@@ -120,7 +120,7 @@ export default {
           <h4 v-else>{{ chat.displayName }}</h4>
 
           <div v-if="chat.is_group" class="text-start">
-            <h6 class="text-muted">Partecipanti ({{ members.length }})</h6>
+            <h6 class="text-muted">Participants ({{ members.length }})</h6>
             <ul class="list-group mb-3" style="max-height: 200px; overflow-y: auto;">
               <li v-for="m in members" :key="m.id" class="list-group-item d-flex align-items-center">
                 <img :src="getFullUrl(m.photo_url)" style="width: 30px; height: 30px; border-radius: 50%; margin-right: 10px;">
@@ -129,8 +129,8 @@ export default {
             </ul>
             
             <div class="input-group mb-2">
-              <input v-model="addQuery" type="text" class="form-control form-control-sm" placeholder="Aggiungi utente..." @keyup.enter="searchToAdd">
-              <button class="btn btn-outline-secondary btn-sm" @click="searchToAdd">Cerca</button>
+              <input v-model="addQuery" type="text" class="form-control form-control-sm" placeholder="Add user..." @keyup.enter="searchToAdd">
+              <button class="btn btn-outline-secondary btn-sm" @click="searchToAdd">Search</button>
             </div>
             <div v-if="addResults.length > 0" class="list-group">
               <button v-for="u in addResults" :key="u.id" class="list-group-item list-group-item-action" @click="addMember(u)">
@@ -141,7 +141,7 @@ export default {
         </div>
         <div class="modal-footer">
           <button class="btn btn-danger w-100" @click="leaveChat">
-            {{ chat.is_group ? 'Abbandona Gruppo' : 'Elimina Chat' }}
+            {{ chat.is_group ? 'Leave Group' : 'Delete Chat' }}
           </button>
         </div>
       </div>

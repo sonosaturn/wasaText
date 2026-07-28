@@ -129,7 +129,7 @@ export default {
         await this.loadMessages()
         await this.loadConversations()
       } catch (e) {
-        alert('Errore invio: ' + e.message)
+        alert('Send failed: ' + e.message)
       }
     },
     
@@ -140,15 +140,15 @@ export default {
       try {
         await this.$axios.put(`/users/${this.myId}/photo`, fd)
         await this.refreshProfile()
-        alert("Foto aggiornata!")
+        alert("Photo updated!")
       } catch (e) {
-        alert("Errore caricamento foto")
+        alert("Photo upload failed")
       }
     },
 
     async updateUsername(newName) {
       if (!newName || newName.length < 3 || newName.length > 16) {
-        alert("Il nome deve essere tra 3 e 16 caratteri")
+        alert("Name must be between 3 and 16 characters")
         return
       }
       try {
@@ -156,10 +156,10 @@ export default {
         this.username = newName
         sessionStorage.setItem('username', newName)
         await this.refreshProfile()
-        alert("Username aggiornato!")
+        alert("Username updated!")
       } catch (e) {
-        if (e.response?.status === 409) alert("Nome già in uso")
-        else alert("Errore durante il cambio nome")
+        if (e.response?.status === 409) alert("Name already taken")
+        else alert("Could not change name")
       }
     },
 
@@ -175,9 +175,9 @@ export default {
            const newChat = this.conversations.find(c => c.id === cr.data.conversationId)
            if (newChat) this.selectChat(newChat)
          } else {
-           alert("Utente non trovato")
+           alert("User not found")
          }
-       } catch (e) { alert("Errore ricerca: " + e.message) }
+       } catch (e) { alert("Search failed: " + e.message) }
     },
 
     openCreateGroup() {

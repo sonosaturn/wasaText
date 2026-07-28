@@ -53,7 +53,7 @@ func (db *appdbimpl) GetConversationMessages(conversationID string, userID strin
 		SELECT 
 			m.id, 
 			m.sender_id,
-			u.username, -- FIX: Seleziona username
+			u.username, -- FIX: select the username
 			m.content, 
 			COALESCE(m.photo_url, '') as photo_url, 
 			m.reply_to_id, 
@@ -84,7 +84,7 @@ func (db *appdbimpl) GetConversationMessages(conversationID string, userID strin
 		var m Message
 		var replyTo sql.NullString
 
-		// FIX: Scan anche m.SenderUsername
+		// FIX: also scan m.SenderUsername
 		err = rows.Scan(&m.ID, &m.SenderID, &m.SenderUsername, &m.Content, &m.PhotoURL, &replyTo, &m.Forwarded, &m.Timestamp, &m.Status)
 		if err != nil {
 			return nil, err

@@ -35,7 +35,7 @@ func (db *appdbimpl) DoLogin(username string) (string, error) {
 	return id, nil
 }
 
-// GetUser returns the user identified by id. (RINOMINATA PER MATCHARE INTERFACCIA)
+// GetUser returns the user identified by id. (renamed to match the interface)
 func (db *appdbimpl) GetUser(id string) (User, error) {
 	var u User
 	err := db.c.QueryRow(`

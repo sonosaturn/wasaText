@@ -40,7 +40,7 @@ func (rt *_router) getMyConversations(w http.ResponseWriter, r *http.Request, _ 
 			LastMessageAt:       c.LastMessageAt,
 			LastMessagePreview:  c.LastMessagePreview,
 			LastMessageSenderID: c.LastMessageSenderID,
-			LastMessageStatus:   c.LastMessageStatus, // MAPPARE QUESTO
+			LastMessageStatus:   c.LastMessageStatus, // map this one
 			UnreadCount:         c.UnreadCount,
 		})
 	}

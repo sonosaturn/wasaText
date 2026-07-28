@@ -17,7 +17,7 @@ func (rt *_router) getUsers(w http.ResponseWriter, r *http.Request, ps httproute
 
 	usersDB, err := rt.db.SearchUsers(query)
 	if err != nil {
-		ctx.Logger.Error("Errore ricerca utenti: ", err)
+		ctx.Logger.Error("Error searching users: ", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -45,6 +45,6 @@ func (rt *_router) getUsers(w http.ResponseWriter, r *http.Request, ps httproute
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(Wrapper{Users: response}); err != nil {
-		ctx.Logger.Error("Errore encoding risposta: ", err)
+		ctx.Logger.Error("Error encoding response: ", err)
 	}
 }

@@ -13,13 +13,13 @@ func (db *appdbimpl) GetMyConversations(userID string) ([]Conversation, error) {
 	SELECT 
 		c.id,
 		c.is_group,
-		COALESCE(CASE WHEN c.is_group = 1 THEN c.title ELSE u.username END, 'Sconosciuto') as title,
+		COALESCE(CASE WHEN c.is_group = 1 THEN c.title ELSE u.username END, 'Unknown') as title,
 		COALESCE(CASE WHEN c.is_group = 1 THEN c.photo_url ELSE u.photo_url END, '') as photo_url,
 		COALESCE((SELECT content FROM messages m WHERE m.conversation_id = c.id ORDER BY m.timestamp DESC LIMIT 1), '') as last_msg,
 		COALESCE((SELECT timestamp FROM messages m WHERE m.conversation_id = c.id ORDER BY m.timestamp DESC LIMIT 1), '') as last_time,
 		COALESCE((SELECT sender_id FROM messages m WHERE m.conversation_id = c.id ORDER BY m.timestamp DESC LIMIT 1), '') as last_sender,
 		
-		-- Recuperiamo lo STATO dell'ultimo messaggio
+		-- Fetch the STATUS of the last message
 		COALESCE((SELECT 
 			CASE 
 				WHEN m2.sender_id = ? THEN 
@@ -78,7 +78,7 @@ func (db *appdbimpl) GetMyConversations(userID string) ([]Conversation, error) {
 
 		c.LastMessagePreview = lastMsg
 		if c.LastMessagePreview == "" && lastTime != "" {
-			c.LastMessagePreview = "[Foto]"
+			c.LastMessagePreview = "[Photo]"
 		}
 		c.LastMessageAt = lastTime
 		c.LastMessageSenderID = lastSender

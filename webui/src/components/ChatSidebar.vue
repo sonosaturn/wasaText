@@ -80,10 +80,10 @@ export default {
 
     <div class="search-box">
       <div class="input-group mb-2">
-        <input v-model="searchQuery" type="text" class="form-control shadow-none" placeholder="Cerca utente..." @keyup.enter="$emit('search-user', searchQuery)">
+        <input v-model="searchQuery" type="text" class="form-control shadow-none" placeholder="Search user..." @keyup.enter="$emit('search-user', searchQuery)">
         <button class="btn btn-light border" @click="$emit('search-user', searchQuery)"><i class="bi bi-chat-dots" /></button>
       </div>
-      <button class="btn btn-outline-primary w-100 btn-sm" @click="$emit('create-group')">Nuovo Gruppo</button>
+      <button class="btn btn-outline-primary w-100 btn-sm" @click="$emit('create-group')">New Group</button>
     </div>
 
     <div class="chat-list">
@@ -98,7 +98,7 @@ export default {
             <small class="text-muted text-truncate d-flex align-items-center">
               
               <span v-if="chat.last_message_sender_id == myId" class="d-flex align-items-center me-1">
-                <span class="me-1">Tu:</span>
+                <span class="me-1">You:</span>
                 <i v-if="chat.last_message_status === 2" class="bi bi-check2-all text-info" />
                 <i v-else-if="chat.last_message_status === 1" class="bi bi-check2-all" />
                 <i v-else class="bi bi-check2" />

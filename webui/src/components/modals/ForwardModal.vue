@@ -40,10 +40,10 @@ export default {
           messageId: this.msgToForward.id
         })
         this.hide()
-        alert("Messaggio inoltrato!")
+        alert("Message forwarded!")
         this.$emit('message-forwarded')
       } catch (e) {
-        alert("Errore inoltro: " + e.message)
+        alert("Forward failed: " + e.message)
       }
     }
   }
@@ -55,11 +55,11 @@ export default {
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Inoltra a...</h5>
+          <h5 class="modal-title">Forward to...</h5>
           <button type="button" class="btn-close" @click="hide" />
         </div>
         <div class="modal-body">
-          <input v-model="searchQuery" type="text" class="form-control mb-3" placeholder="Cerca chat...">
+          <input v-model="searchQuery" type="text" class="form-control mb-3" placeholder="Search chats...">
           <div class="list-group">
             <button v-for="chat in filteredConversations" :key="chat.id" class="list-group-item list-group-item-action d-flex align-items-center" @click="forwardTo(chat)">
               <div class="fw-bold">{{ chat.displayName }}</div>

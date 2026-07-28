@@ -33,8 +33,8 @@ export default {
     <div class="login-container">
       <h2 class="mb-4">WasaText</h2>
       <ErrorMsg v-if="errorMsg" :msg="errorMsg" />
-      <input v-model="username" type="text" class="form-control mb-3" placeholder="Nome utente (min 3 caratteri)" @keyup.enter="doLogin">
-      <button class="btn btn-success w-100" :disabled="username.length < 3" @click="doLogin">ENTRA</button>
+      <input v-model="username" type="text" class="form-control mb-3" placeholder="Username (min 3 characters)" @keyup.enter="doLogin">
+      <button class="btn btn-success w-100" :disabled="username.length < 3" @click="doLogin">LOG IN</button>
     </div>
   </div>
 </template>
